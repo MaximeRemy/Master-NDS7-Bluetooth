@@ -11,12 +11,12 @@ F = m \cdot a \addunit{\newton}
 
 %Two equations without description
 \begin{subequations} \label{eq:tech_ToA}
-	\begin{align}
-		\varphi = \cos^{-1} \left( \frac{y}{x} \right) \\
-		y = \Delta \tau \cdot c \\
-		\theta \approxeq \SI{90}{\degree} - \varphi \\
-		\theta \approxeq \SI{90}{\degree} - \cos^{-1} \left( \frac{ \Delta\tau \cdot c}{x} \right)
-	\end{align}
+	\begin{flalign}
+		&\varphi = \cos^{-1} \left( \frac{y}{x} \right) \\
+		&y = \Delta \tau \cdot c \\
+		&\theta \approxeq \SI{90}{\degree} - \varphi \\
+		&\theta \approxeq \SI{90}{\degree} - \cos^{-1} \left( \frac{ \Delta\tau \cdot c}{x} \right)
+	\end{flalign}
 \end{subequations}
 
 
@@ -35,7 +35,11 @@ F = m \cdot a \addunit{\newton}
 % arcsin^2 = \arcsin^2(v)
 % arcsin(v^2+u^2) = \arcsin((v+u)^2)
 
-
+%%%%%% Adding a glossary entry %%%%%%%
+%%In glossary. tex file
+\newacronym{e}{E}{Example} %{label}{initials}{Full words with initial in capitals}
+%%In the report whenever you want to use it
+\gls{e}
 
 
 
@@ -77,7 +81,7 @@ F = m \cdot a \addunit{\newton}
 
 
 %Figure 
-\begin{figure} [h]
+\begin{figure} [htbp]
 	\centering
 	\includegraphics[width=1\linewidth]{CAN_frame_without_bitstuff}
 	\caption{Example of complete \gls{can} frame without bit stuffing \citep{CAN-Bus-frame}.}
