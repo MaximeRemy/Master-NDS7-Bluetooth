@@ -1,0 +1,67 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+
+# Latex garbage
+*.aux
+*.log
+*.blg
+*.bbl
+*.synctex.gz
+*.tdo
+*.thm
+*.toc
+*.tex.bak
+Report/master.pdf
+
+Report/figures/matrixrand-eps-converted-to\.pdf
+
+Report/figures/matrixopt-eps-converted-to\.pdf
+
+Report/figures/Design/IPController/rlocusZeroAdded-eps-converted-to\.pdf
+
+Report/figures/Design/IPController/rlocusRedef-eps-converted-to\.pdf
+
+Report/figures/Design/IPController/rlocusArmStick-eps-converted-to\.pdf
+
+Report/figures/Design/IPController/rlocusVArm-eps-converted-to\.pdf
+
+Report/figures/Design/IPController/rlocusplus-eps-converted-to\.pdf
+
+Report/figures/Design/IPController/rlocusminus-eps-converted-to\.pdf
+
+Report/figures/Design/IPController/pzouterloop-eps-converted-to\.pdf
+
+Report/figures/Design/IPController/pzip-eps-converted-to\.pdf
+
+*eps-converted-to.pdf
