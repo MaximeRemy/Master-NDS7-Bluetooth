@@ -1,0 +1,106 @@
+\section{Calculation of phase} \label{sec:calc_of_phase}
+After sampling the signals, they have to be processed to determine the phase difference between the antennas. This project investigates two different methods of determining the phase difference:
+
+\begin{enumerate}
+	\item Phase determination by \gls{dft}
+	\item Phase determination by multiplication
+\end{enumerate}
+
+\subsection{Phase determination by \gls{dft}}
+
+The \gls{dft} is a method that makes a spectrum analysis of a discrete real signal by transforming it into a discrete frequency spectrum as presented in \autoref{eq:DFTTrans}.
+
+\begin{equation}\label{eq:DFTTrans}
+S[k] = \sum_{n=0}^{N-1}s[n]\cdot\exp^{-j\cdot \frac{k\cdot n\cdot 2\cdot \pi}{N}}
+\end{equation}
+\startexplain
+\explain{$S[k]$ is the k'th element of the fourier transformed signal}{1}
+\explain{$s[n]$ is the n'th element of the sampled signal}{1}
+\explain{$N$ is the the number of samples}{1}
+\explain{$n$ is the time discrete signal sample number, where $n \in \mathbb{N}$}{1}
+\explain{$k$  is the fourier transformed signal sample number, where $n \in \mathbb{N}$}{1}
+\stopexplain
+
+Since the output is a complex value the phase difference at a specific frequency can be calculated as in \autoref{eq:PhaseDFT}.
+
+\begin{equation} \label{eq:PhaseDFT}
+\varphi [k]= \arctan\left(\frac{Q[k]}{I[k]}\right)
+\end{equation}
+\startexplain
+\explain{$\varphi[k]$ is the $k$'th phase of the signal}{\si{\radian}}
+\explain{$Q[k]$ is the $k$'th imaginary part of the signal at the frequency}{1}
+\explain{$I[k]$ is the $k$'th real part of the signal at the frequency}{1}
+%\explain{$N$ is the the number of samples}{1}
+\stopexplain
+
+In \cite{TechReport:DirectionFindingPaper} the author's design a system which determines the determines the \gls{aoa} using the phase difference of three signals. The phase difference is determined using \gls{fft} and has a precision of $\pm$ \SI{1.75}{\milli\radian} using realistic noise models. They find that using a 2048 point \gls{fft} takes \SI{1.2}{\second} because of various latencies in their system. This latency would be too large to fulfil the requirements of this project.  
+Although using the \gls{fft} to estimate the phase of the signals is proven to provide a precise estimate of the \gls{aoa}, but considering the limited processing power of the prototyping platform \gls{psoc} and evident time consuming calculations this project aims for a different approach.
+
+\subsection{Phase determination by multiplication}\label{subsec:phaseDiff}
+A signal can be defined as in \autoref{eq:SigProcSignalDefinition}. 
+
+
+\begin{equation}\label{eq:SigProcSignalDefinition}
+S_k[n]=A_k \cos \left(\frac{2\pi f_k}{ f_s} n+\phi_k \right)	\addunit{\volt}
+\end{equation}
+\startexplain
+\explain{$S_k[n]$ is the $k$'th signal}{1}
+\explain{$A_k$ is the amplitude of the $k$'th signal}{1}
+\explain{$\phi_k$ is the phase of the $k$'th signal}{\si{\radian}}
+\explain{$f_k$ is the frequency of the $k$'th signal}{\si{\hertz}}
+\explain{$f_s$ is the sampling frequency}{\si{\hertz}}
+\explain{$n$ the sample number, where $n \in \mathbb{N}$}{1}
+\explain{$k$ is the signal number, where $k \in \{ 1,2,3 \} $}{1}
+\stopexplain
+
+By multiplication of signals $S_1[n]$ and $S_2[n]$ \autoref{eq:SigProcSignalMultiplication} can be derived.
+\begin{align}
+S_{12}[n] &= S_1[n]\cdot S_2[n] \\
+&= A_1 \cos \left(\frac{2\pi f_1}{ f_s} n+\phi_1 \right) \cdot A_2 \cos \left(\frac{2\pi f_2}{ f_s} n+\phi_2 \right) \addunit{\volt} \label{eq:SigProcSignalMultiplication}
+\end{align}
+
+By the trigonometric identities \autoref{eq:SigProcTrigIdent} is deduced.
+\begin{equation}\label{eq:SigProcTrigIdent}
+S_{12}[n]=\frac{A_1 A_2}{2}\left(  \cos \left(\frac{2\pi n ( f_1 - f_2)}{f_s}+ \phi_1 -\phi_2 \right) + \cos \left(\frac{2\pi n(f_1+f_2)}{ f_s} +\phi_1+\phi_2 \right)  \right) \addunit{\volt}
+\end{equation}
+
+$f_1 = f_2$ Since both signals originates from equivalent mixings of the drone's signal and the same oscillator. This results in a \gls{dc} level containing the phase difference information since $f_1 - f_2 = 0$ similarly to the mixing in \autoref{sec:tracking_mixer}. The mean of a cosine is zero and by taking the mean of $S_1[n]\cdot S_2[n]$ the DC level is isolated as seen in \autoref{eq:SigProcLowPass}.
+
+\begin{equation}
+	\implies \text{mean} \left( S_{12}[n]\right) \approx \frac{A_1 A_2}{2} \cos \left(  \phi_1-\phi_2 \right) \addunit{\volt}  \label{eq:SigProcLowPass}  \\ 
+\end{equation}
+
+The phase-difference is then given by \autoref{eq:SigProcPhaseDiff}.
+\begin{equation}\label{eq:SigProcPhaseDiff}
+\phi_2-\phi_1=  \arccos \left( \text{mean} \left( S_{12}[n]\right) \cdot \frac{2}{A_1 A_2}\right) \addunit{\radian}	
+\end{equation}
+
+However, this method only yields the absolute value of the phase difference. Information about whether the phase difference is negative or positive is needed. Shifting one signal by $\frac{\pi}{2}$ mean that the absolute value of the phase difference is centred around $\frac{\pi}{2}$ and both a positive and a negative phase shift ranging from $\frac{-\pi}{2}$ and $\frac{\pi}{2}$ can be determined.
+
+The only information truly needed in order to use this method is the amplitude of $S_{1}[n]$ and $S_{2}[n]$ to normalize them and so get \autoref{simpArcos}.
+
+\begin{equation}\label{simpArcos}
+\phi_2-\phi_1=  \arccos \left( \text{mean} (S_{12}[n]) \cdot2\right) -\frac{\pi}{2} \addunit{\radian}	
+\end{equation}
+
+If the signal is assumed to be a sine wave then the amplitude of a signal can be determined by the \gls{rms} method as seen in \autoref{eq:sqrtmean}.
+
+\begin{subequations} \label{eq:sqrtmean}
+	\begin{align}
+	&A_1 = \sqrt{\frac{\sum\limits_{n=0}^{x-1}{S_{1}[n]}}{x}}\cdot\sqrt{2} \\
+	&A_2 = \sqrt{\frac{\sum\limits_{n=0}^{x-1}{S_{2}[n]}}{x}}\cdot\sqrt{2}
+	\end{align}
+\end{subequations}
+\startexplain
+\explain{$x$ is the number of samples}{1}
+\stopexplain
+
+If the signal is a sine or cosine wave then the amplitude can be determined exact. However it is noise sensitive but as mentioned earlier the \gls{snr} should be above \SI{46.7}{\decibel} as mentioned in \autoref{PhaseDifferenceDetection}. A simulation in MATLAB with 1000 points which is in \autoref{fig:PhaseDiffSimulation} shows that using the multiplication method produce an average error of \SI{1.4}{\milli\radian}. Tests using two signal generators with a programmable phase difference, and the \gls{adc} described above an average precision of \SI{1.89}{\milli\radian} was achieved. Precision better than \SI{2.08}{\milli\radian} is achievable and tests of the multiplication method (in \autoref{appendix:aoaestimationerr}) proves it is fast and precise.
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=\textwidth]{figures/design/UglyFigure}
+	\caption{Simulation of the phase difference program with the multiplication signal method. The signal is applied white Gaussian noise to have a \gls{snr} of \SI{46.7}{\deci\bel}}
+	\label{fig:PhaseDiffSimulation}
+\end{figure}
+

@@ -1,0 +1,85 @@
+%Equations
+%One equation with description
+\begin{equation}
+F = m \cdot a \addunit{\newton}
+\end{equation}
+\startexplain
+	\explain{F is the net force applied}{\si{\newton}}
+	\explain{m is the mass of the body}{\si{\kilogram}}
+	\explain{a is the body's acceleration}{\si{\meter\per\second\squared}}
+\stopexplain
+
+%Two equations without description
+\begin{subequations} \label{eq:tech_ToA}
+	\begin{align}
+		\varphi = \cos^{-1} \left( \frac{y}{x} \right) \\
+		y = \Delta \tau \cdot c \\
+		\theta \approxeq \SI{90}{\degree} - \varphi \\
+		\theta \approxeq \SI{90}{\degree} - \cos^{-1} \left( \frac{ \Delta\tau \cdot c}{x} \right)
+	\end{align}
+\end{subequations}
+
+
+%%%%%%% Variable naming rules %%%%%%%
+% DC = 		$v_A$
+% AC = 		$v_a(t)$
+% Both = 	$v_a(t)$
+% $L{v_a(t)} = V_a(s)$
+% j = complex operator
+% i = current
+% v = voltage
+% sin = $\sin$
+% cos = $\cos$
+% log = $\log$
+% arcsin = \arcsin(v)
+% arcsin^2 = \arcsin^2(v)
+% arcsin(v^2+u^2) = \arcsin((v+u)^2)
+
+
+
+
+
+%Tables
+%Big table
+\begin{table}[h]
+	\centering
+	\caption{\gls{can} controller commands and explanation of these.}
+	
+	\begin{tabularx}{\textwidth}{lX}
+		\textit{Command}		&	\textit{Explanation} \\ \rowcolor{lightGrey} \toprule
+		Reset					&	Is used to re-initialize the system and the internal registers.\\
+		Write					&	Is used to write to a register in a specific address. Can continue to be sent to sequential registers.\\ \rowcolor{lightGrey}
+		Read					&	Reads data from a specified register. Shifts out data of the register and increments to next register.\\
+		Bit Modify				&	Sets, modifies or clears a specified bit in status and control registers.\\ \rowcolor{lightGrey}
+		Read Status				&	Allows instruction access to status bits.\\
+	\end{tabularx}
+	\caption*{\citep{MCP2510}}
+\end{table}\label{tab:mcp_cmd_expl}
+
+
+
+
+
+%Small table
+
+\begin{table}[h]
+	\centering
+	\caption{Summary of the different methods of tracking the drones direction.}\label{tab:trackdirectconcl}
+	\begin{tabular}{ll}
+		\textit{Method} 				& \textit{Summery}  	\\ \toprule \rowcolor{lightGrey}
+		Optical tracking				& Impractical \\
+		Phase difference 				& Good solution \\ \rowcolor{lightGrey}
+		Signal strength 				& Very noise prone and not precise \\
+		Time of arrival					& Requires a high sampling frequency and sensitive electronics \\
+	\end{tabular}
+\end{table}
+
+
+
+%Figure 
+\begin{figure} [h]
+	\centering
+	\includegraphics[width=1\linewidth]{CAN_frame_without_bitstuff}
+	\caption{Example of complete \gls{can} frame without bit stuffing \citep{CAN-Bus-frame}.}
+	\label{fig:frame_wo_bitstuff}
+\end{figure}

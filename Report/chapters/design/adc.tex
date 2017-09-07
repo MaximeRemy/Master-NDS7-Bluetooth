@@ -1,0 +1,62 @@
+\subsection{\gls{adc}} \label{sec:adc}
+The signal from the mixers is a downconverted version of the signals from the anntennas. These three signals are lowpass filtered so in practice only the low frequency part remains. The signals still contains the phase information and an \gls{adc} is used to sample the three signals. The frequency of these signals should not exceed \SI{543}{\kilo\hertz}, since this is the low-pass filter cutoff frequency and the frequency of the signal should be above \SI{10}{\kilo\hertz}, which is the specified lowest operating range for the chosen mixer \citep{datasheet:LT5560}. Ideally the three signals should be sampled at exactly the same time in order to extract the phase difference, sampled at a high resolution, and at a sampling frequency above $2\cdot\SI{543}{\kilo\hertz} = \SI{1.086}{\mega\hertz}$ because of Nyquist rate.
+In the chosen prototyping board for signal processing \gls{psoc} 5LP there are two identical Successive Approximation \glspl{adc} \cite{datasheet:PSoC5LP:_CY8C58LP_Family} refered to as SAR \gls{adc}. This presents an issue for sampling three signals at the same time. The maximum sampling frequency of the SAR \glspl{adc} is \SI{1}{\mega\hertz} at the maximum resolution, \SI{12}{\bit} \citep{datasheet:PSoC5LP:_CY8C58LP_Family}.
+It is chosen that sampling at \SI{1}{\mega\hertz} should suffice since simulations and tests show that aliasing introduced by sampling at a frequency that is too low, does not introduce much of an error, unless the signal is sampled at a frequency that is exactly an integer divison of the frequency of the signal. Tests show that the phase approximation from multiplication method using the \gls{psoc} result in a phase approximation up to a signal frequency of \SI{5}{\mega\hertz}. 
+Because of the high sampling frequency and parallel data transfer required, a \gls{dma} is used to transfer the data from the \gls{adc} to the memory, which then can be accessed by the program. A \gls{dma} is implemented using a \gls{psoc} hardware block. Each \gls{dma} is set to store the incoming data to a specific address in the microchip.
+
+To sample at exactly the same time, the same external clock is used which runs at \SI{18}{\mega\hertz} as this the highest maximum frequency for the \gls{adc} \citep{datasheet:PSoC5LP:_CY8C58LP_Family}. When using an external clock the maximum conversion rate becomes \SI{0.666}{} \gls{msps} because of hardware limitations of the \gls{adc}. When using a clock frequency above \SI{1}{\mega\hertz} and the internal $V_{ref}$, bypass capacitors have to be placed between the $V_{refs}$ and $GND$ \citep{datasheet:saradc}.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{ADCTopDesign2}
+\caption{Block diagram of configuration of ADCs to achieve sampling of signals from the three antennas at the same time.}
+\label{fig:ADCTopDesign2}
+\end{figure}
+
+To compensate for having only two \glspl{adc} a multiplexer is used to choose which of two of the three signals to sample at a time. This is possible because only the phase difference between two signals is needed at a time. The two antennas in the horizontal plane provide a phase difference in relation to the angle in the azimuth plane, and the phase difference between two antennas that are placed vertically provide a phase difference in relation to the angle in the elevation plane.
+On \autoref{fig:ADCTopDesign2} it is shown how the \gls{adc} is implemented in the \gls{psoc}. When a new set of values is needed from the \gls{adc}, first the analog multiplexer \texttt{ADC_MUX} is set to use the single ended analog input \texttt{PIN_ADC_In_1}. Then the external clock, \texttt{ADC_Clock} start and provide the same clock for both \glspl{adc}. To ensure that each sample occur at the same time the clock \texttt{SOC_Clock} triggers each \gls{adc} to sample. After each DMA has stored 1000 samples, an interrupt is triggered letting the software know that new data is available and the \texttt{ADC_Clock} and \texttt{SOC_Clock} is stopped and the 1000 point array are copied using \texttt{memcpy} to another address in the \gls{psoc}. Before sampling again, any pending \gls{dma} data request is cleared since this proved an issue. \texttt{Pin_ADC_In_2} is then selected, and the process is repeated.
+
+The output is four arrays (two pairs) which can be processed to extract the phase information.
+
+\subsubsection{Quantization error}\label{subsec:quantization_error}
+When sampling an analog signal in a finite resolution quantization noise is generated. The noise can be reduced by increasing the sampling resolution or by oversampling. Since this project requires quick batches of 1000 values several times a second the oversampling method is considered unsuitable as it would prolong calculation times. 
+The worst possible quantization error of an ideal \gls{adc} is half of the minimum voltage necessary for the \gls{lsb} to change. It implies the possibility of two different analog values having the same digital value. The minimal voltage difference necessary to change the \gls{lsb} is as seen in \autoref{eq:QuantizationError} \citep{AppReport:ADCQuantization}.
+
+\begin{equation} \label{eq:QuantizationError}
+q=\frac{A}{2^{n-1}-1}\approx \frac{A}{2^{n-1}} \addunit{\si{\volt}}
+\end{equation}
+\startexplain
+\explain{$q$ is the minimal voltage difference necessary to change the \gls{lsb}}{\si{\volt}}
+\explain{$A$ is the amplitude of the converted signal}{\si{\volt}}
+\explain{$n$ is the number of bits of the \gls{adc}}{1}
+\stopexplain
+
+The quantization error is seen as noise. It is possible to calculate the average power of the noise in respect to the error, and the average power of the signal (in this case a sine wave) by their mean square level as \autoref{eq:TotalQuantizationError} assuming an ideal converter \citep{AppReport:ADCQuantization}.
+
+\begin{subequations} \label{eq:TotalQuantizationError}
+	\begin{align}
+		&N^2 =\frac{1}{q}\int_{-\frac{q}{2}}^{\frac{q}{2}}E^2dE=\frac{q^2}{12} \\
+		&S^2 = \frac{1}{2\pi}\int_{0}^{2\pi}A^2sin^2(\omega t)d\omega t=\frac{A^2}{2}
+	\end{align}
+\end{subequations}
+\startexplain
+\explain{$N$ is the \gls{rms} of the quantization noise power}{1}
+\explain{$E$ is the error defined as $E=\frac{1}{q}$ for $-\frac{q}{2}<E<\frac{q}{2}$ else 0}{1}
+\explain{$S$ is the \gls{rms} of the signal power}{1}
+\explain{$\omega$ is the frequency of the signal}{\si{\radian\per\second}}
+\stopexplain
+
+From \autoref{eq:TotalQuantizationError} the \gls{snr} can be deduced to get a good idea of the performance of an ideal \gls{adc} depending on its resolution. In this case the \gls{snr} is given by \autoref{eq:SNRADC} \citep{AppReport:ADCQuantization}.
+\begin{equation} \label{eq:SNRADC}
+		\gls{snr}=10\log_{10}\left( \frac{S^2}{N^2} \right)\approx 6.02n + 1.76 \addunit{\decibel}
+\end{equation}
+%\todo[author=Mads J]{I cannot make sense of this calculation after reading through these thoroughly: http://www.analog.com/media/en/training-seminars/tutorials/MT-001.pdf
+%http://www.ti.com/lit/an/slaa013/slaa013.pdf 
+%But the conclusion is correct.}
+%
+
+The resolution of the \gls{psoc}'s \gls{adc} can either be \SI{8}{\bit}, \SI{10}{\bit} or \SI{12}{\bit}.
+So the \glspl{snr} from quantization for \SI{8}{\bit}, \SI{10}{\bit} and \SI{12}{\bit} \glspl{adc} are respectively \SI{49,9}{\decibel}, \SI{62,0}{\decibel} and \SI{74,0}{\decibel}. 
+In \autoref{PhaseDifferenceDetection} in \autoref{eq:phase_reqsnr} it is described that a \gls{snr} > \SI{46,7}{\decibel} is required. Because a significant amount of noise is introduced by other sources in the system, it is chosen to minimize the noise in the \gls{adc}, at a compromise of speed, by using a \SI{12}{\bit} resolution.
+
+In conclusion the three signals are sampled in pairs of two at the same time with a sampling frequency of 0.666 \gls{msps} with a resolution of \SI{12}{\bit}, which introduces a quantization error of approximately \SI{74,0}{\decibel}, when the \gls{adc}'s reference voltage is exactly equal to the maximum voltage of the signal. With the \gls{adc} implemented, an algorithm for determining the phase difference of the sampled signals is made.

@@ -1,0 +1,59 @@
+\chapter{Introduction to design}\label{sec:introToDesign}
+In this Part II the different modules of the system are designed and constructed. The design is divided into two parts. A part focused on control and driving the antenna stand motors and a part focused on tracking the drone.
+
+The design incorporate phase detection for tracking, since it was concluded in \autoref{sec:pre:trackingConclusion} that this would be the optimal choice for this application.  
+
+As the processing unit for this project, a \gls{psoc} 5LP (CY8CKIT-059 Development Board from CYPRESS SEMICONDUCTOR) \citep{datasheet:PSoC5LP:_CY8C58LP_Family} is chosen. A \gls{psoc} can be programmed through C and Verilog. It is chosen to use a \gls{psoc} as the platform for the logic and digital circuitry in this project since it is available and contains a microprocessor, \gls{adc} and \gls{pwm} module, which is very versatile and is assessed to be sufficient for the purpose of this project.
+
+An overview of the entire system can be seen on \autoref{design:fig:systemOverview}.
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/design/intro/systemOverview}
+\caption{Overview of the full system.}\label{design:fig:systemOverview}
+\end{figure}
+
+An antenna with attached oscillator circuitry transmits a pilot signal to the ground station.
+The ground station captures the signal through three precisely spaced antennas. One of the signals is phase shifted \SI{90}{\degree} to shift the range of the phase calculation from [\SI{0}{\degree} : \SI{180}{\degree}] to [\SI{-90}{\degree} : \SI{90}{\degree}], as it is covered in \autoref{sec:calc_of_phase}. After the phase shift, the three signals are frequency downconverted, to a frequency which can be sample by the \gls{psoc}. The \gls{psoc} then handles ADC, phase estimation, angle calculations and the logic required to control the stepper and DC motors. The \gls{psoc} outputs a signal dependent on the input signals and the internal logic, to the stepper and DC motor drivers. The stepper and DC motor drivers handles the power needed to move the antenna stand to the correct position.
+
+The collective system can also be analyzed as two feedback control systems, one for the azimuth angle and one for the elevation.
+For the azimuth angle a feedback control system as illustrated on \autoref{design:fig:controlSystemAzimuth} can be found.
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/design/intro/controlSystemAzimuth}
+\caption{Control system for maintaining an azimuth angle of the antenna stand, which is the same azimuth angle as the drone's direction.}\label{design:fig:controlSystemAzimuth}
+\end{figure}
+
+%If $\phi_s(t) = 0$ is considered, a transfer function for the relationship between the reference value and the azimuth angle of the stand, $H_{\phi r}(s)$, will be as \autoref{design:eq:TFReferenceAzimuth}.
+%\begin{equation}
+%H_{\phi r}(s)=\frac{\phi_s (t)}{r_\phi (t)}=\frac{D_\phi (s)\cdot G_{DCM}(s)\cdot G_\phi (s)}{1+ D_\phi (s)\cdot G_{DCM}(s)\cdot G_\phi (s)\cdot T(s)}\label{design:eq:TFReferenceAzimuth}
+%\end{equation}
+%
+%If $r_\phi (t)=0$ is considered, then a transfer function between the azimuth angle towards the drone and the azimuth angle of the antenna, $H_{\phi d}(s)$, will be as \autoref{design:eq:TFDroneAngleAzimuth}.
+%\begin{equation}
+%H_{\phi d}(s)=\frac{\phi_s (t)}{\phi_d (t)}=\frac{T(s)\cdot D_\phi (s)  \cdot G_{DCM}(s) \cdot G_\phi (s)}{1+T(s) \cdot D_\phi (s) \cdot G_{DCM}(s) \cdot G_\phi (s)} \label{design:eq:TFDroneAngleAzimuth}
+%\end{equation}
+%
+%It is seen that the dynamic properties of the transfer function $H_{\phi d}(s)$ describes the performance of the tracking system. The lower the settling time and rise-time this function has in the time domain, the faster and more responsive will the overall tracking solution be. The transfer function is used to determine the performance. 
+
+Similarly to control the elevation angle, a feedback control system as illustrated on \autoref{design:fig:controlSystemElevation} can be set up.
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/design/intro/controlSystemElevation}
+\caption{Control system for the elevation angle, actoated be the stepper motor.}\label{design:fig:controlSystemElevation}
+\end{figure}
+
+%The elevation control system is handled differently relative to the azimuth control, since a stepper motor does not work in the same linear fashion as an DC motor. The stepper motor moves in discrete steps of a given angle, as described in \autoref{sec:techAnalAnalOfStepMotor}. For this reason, no transfer function is determined for the stepper motor. Instead the switching frequency of the stepper driver, together with the transfer function of the tracking system, $T(s)$, is used to determine the speed and performance of the movement in the elevation plane. 
+%
+%\todo[author=Jimmy, inline]{I am not sure I understand what you mean by this. Do you mean that you will not use the transfer function to determine that response time, etc. of the system, but rather derive that from the stepper motor switching frequency?}
+
+With the desired system descried the design of the system take place, starting with the tracking module followed by the mechanical module and an implementation chapter. 
+
+After the design phase is over, the complete system is tested in \autoref{pt:test_conclusion}.
+
+
+
+
+
+
+
+

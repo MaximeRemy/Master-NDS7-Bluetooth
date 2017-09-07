@@ -1,0 +1,172 @@
+\newpage
+\section{Stepper motor}\label{sec:stepperMotor}
+As described in \autoref{sec:introToDesign} a stepper motor controls the pointing in the elevation direction. The motor itself is controlled by a driver and a controller on the \gls{psoc}. The stepper motor driver and controller are connected to the system and follow the structure of \autoref{design:fig:controlSystemElevation}. Analysis of the motor itself is done in \autoref{sec:techAnalAnalOfStepMotor}.
+
+In this section the stepper motor driver and the stepper motor controller are designed and implemented, to comply with \autoref{req:mech_precision} and \autoref{req:mech_speed}. These require a steady-state error of $e_{\theta} \leq \SI{2.08}{\milli\radian}$ and a maximum angular velocity $\omega_\theta \geq \SI{1.236}{\radian\per\second}$.
+
+\subsection{Stepper Motor Driver}\label{sec:StepperMotorDriver}
+To simplify and shorten development time, it is chosen to use a stepper motor driver \gls{ic}. A board by Pololu with an Allegro A4988 microstepping driver attached \cite{datasheet:pololu_a4988}, is chosen based on availability during the design. The driver uses a separate motor power supply to drive steps of higher voltage than the logic voltage of the micro controller and thereby increase the torque applied to the stand by the stepper motor \citep{datasheet:a4988}. The stepper motor driver board is connected to the \gls{psoc}, motor voltage supply $V_s$ and the stepper motor, as illustrated on \autoref{fig:design:stepperMotorDiagram}.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{figures/design/stepperMotorDriver/stepperMotorAndDriverDiagram}
+	\caption{Diagram of how the A4988 stepper motor driver carrier is connected to the \gls{psoc}, power supply $V_s$ and the stepper motor. The capacitor C1 is added based on recommendation by the manufacturer \cite{datasheet:pololu_a4988} and is used to decouple the motor supply. The physical pins on the \gls{psoc}, used for stepper motor control is chosen in \autoref{ch:implementation}.} \label{fig:design:stepperMotorDiagram}
+\end{figure}
+		
+With the stepper motor driver attached, the motor is driven by pulling the pin \texttt{stepperEnable} \texttt{LOW}, then setting the direction through the \texttt{stepperDirection} pin. The \texttt{step} pin is then pulsed \texttt{HIGH} and \texttt{LOW}, in a pattern depending on the chosen duty cycle and frequency. Each time \texttt{step} is pulled \texttt{HIGH}, the stepper motor moves a step. The \texttt{MS1} pin allows the \gls{psoc} to change the step size from full step to half step by pulling \texttt{MS1} to \texttt{HIGH}. Before the frequency is chosen, the supply voltage is chosen, to ensure that the stepper motor does not reach too high temperatures.
+
+The maximum coil temperature and thermal resistance of the SAIA UBD stepper motor coils, are given in the stepper motor's datasheet, to be \SI{105}{\degreeCelsius} and \SI{27}{\kelvin\per\watt} respectively \cite{SAIAstep}. This limits the maximum allowed power in the motor, the maximum allowed power is calculated with \autoref{eq:stepper_motor_temperature}.
+\begin{equation} \label{eq:stepper_motor_temperature}
+	P_{max} =\frac{T_{mR}}{\theta_{WA}} = \frac{T_{mW}-T_{A}}{\theta_{WA}} = \frac{\SI{378,15}{\kelvin} - \SI{298,15}{\kelvin}}{\SI{27}{\kelvin\per\watt}} \approx \SI{2,96}{\watt}
+\end{equation}
+\startexplain
+	\explain {$P_{max}$ is the maximum power allowed}{\si{\watt}}
+	\explain {$T_{max}$ is the maximum temperature}{\si{\kelvin}}
+	\explain {$T_{maxW}$ is the maximum temperature of the winding}{\si{\kelvin}}
+	\explain {$T_{A}$ is the  ambient temperature (assumed to be \SI{25}{\degreeCelsius} = \SI{298,15}{\kelvin})}{\si{\kelvin}}
+	\explain {$\theta_{WA}$ is the thermal resistance of the winding}{\si{\kelvin\per\watt}}
+\stopexplain
+
+With a winding resistance of \SI{100}{\ohm} (from the stepper motor datasheet \cite{SAIAstep}) and a driving voltage of \SI{10}{\volt}, the maximum power consumption of the motor is calculated with \autoref{eq:motorWattage}. 
+\begin{equation}\label{eq:motorWattage}
+P_{heat}=\frac{(\SI{10}{\volt})^2}{\SI{100}{\ohm}} = \SI{1}{\watt}
+\end{equation}
+Since \SI{1}{\watt} is less than the maximum allowed, a driving voltage of \SI{10}{\volt} is chosen. 
+
+One of the drivers main features is the ability to not only do full steps, but also do fractions of a step. The chosen driver can do steps of different sizes ranging from full steps down to one sixteenth of a step. The smaller steps makes it possible to reduce the step angle if needed. The smallest step angle is calculated in \autoref{Eq:smalleststep}.
+
+\begin{equation}\label{Eq:smalleststep}
+\frac{\theta_{step}}{16}=\frac{\SI{2.618}{\milli\radian\per step}}{16} = \SI{163,625}{\micro\radian\per step}
+\end{equation}
+
+To get within the required precision of \SI{2.6}{\milli\radian} ordinary full steps are sufficient as the maximum error $e_\theta$ is given as half the step size as shown by \autoref{eq:step_size_error}.
+\begin{equation} \label{eq:step_size_error}
+	e_\theta = \frac{\theta_{step}} {2} \approx \SI{1.309}{\milli\radian} < \SI{2.6}{\milli\radian}
+\end{equation}
+ 
+The driver is tested to confirm the correct workings of the motor.
+
+\subsection{Stepper motor driver test}
+To test whether the stepper driver works a rotation of $\frac{\pi}{18}~\si{\radian}$ (\SI{10}{\degree}) is applied. The driver is tested with full and half-steps so 66 full steps and a single half step are expected. The output is measured on an oscilloscope and shown on \autoref{fig:stepper_driver}. The driver is tested without load, at \SI{400}{\hertz} step frequency as trial and error has shown this is the highest frequency the motor moves at. 
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{stepper_driver_400hz}
+	\caption{The output of the stepper motor driver. Each line is one of the motor phases and a step happens at each transition. A final half step can be seen at the end of the second graph. In total 66 full steps and a single half step are taken and the expected rotation of $\frac{\pi}{18}~\si{\radian}$ is observed.}
+	\label{fig:stepper_driver}
+\end{figure}
+
+The results of the test on \autoref{fig:stepper_driver} show the expected 66.5 steps taken.
+
+When attaching the stepper motor to the antenna stand it is noted the motor does not move smoothly at a stepping frequency of \SI{400}{\hertz}. The speed of the motor increases with the frequency, but the torque applied decreases as seen on the performance charts of the datasheet \cite{SAIAstep}. By testing a variety of lower frequencies a stepping frequency \SI{200}{\hertz} is found to be low enough to supply enough torque to move the antenna stand with the antenna attached. This frequency gives the rotational speed $\omega_{\theta}$ calculated by \autoref{eq:rotationalSpeed}.
+\begin{equation} \label{eq:rotationalSpeed}
+\omega_{\theta}=\SI[per-mode=fraction]{2.6}{\milli\radian\per\step} \cdot \SI[per-mode=fraction]{200}{\step\per\second} = \frac{\pi}{6}~\si{\radian\per\second} \approx \SI{0,524}{\radian\per\second}
+\end{equation}
+It is seen that angular velocity does not comply with \autoref{req:mech_speed}, since $\omega_\theta \ngeq \SI{1.236}{\radian\per\second}$. To increase the velocity, three things can be considered. The voltage can be increased resulting in more current, and by extension more torque but also more heat. The weight of the antennas can be reduced, or moved closer to the axis of rotation to decreasing the necessary torque. Lastly another stepper motor with a higher torque can be used. Since these options require redesigning or rebuilding parts of the prototype, it simply does not fit in the scope of the project. The project therefore settles on a stepping frequency of \SI{200}{\hertz} and a angular velocity of $\omega_\theta \approx \SI{0.52}{\radian\per\second}$.
+
+The parameters of the motor and driver have now been established and a controller is designed.
+
+\subsection{Stepper motor controller}
+As the stepper motor driver has to receive a control signal in order to rotate the stepper motor, a controller is designed on the \gls{psoc}. A simple version of the controller was used to test the speed above, but an implementation on a microprocessor running single threaded program requires the attention of the microprocessor during the whole rotation of the stepper motor. The time the microprocessor is occupied with rotating the stepper motor can be long and varies with angle. For an efficient and stable control system, the time between new angle measurements for the feedback should be very short compared to the speed of the drone and antenna stand.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.9\linewidth]{figures/design/stepper_motor_programming.jpg}
+	\caption{Diagram of the hardware implementation of the \texttt{step} and \texttt{MS1} pin control.}
+	\label{fig:StepperProg}
+\end{figure}
+
+Control of the \texttt{step} and \texttt{MS1} pins is implemented in hardware as a Verilog module called \texttt{stepperCountdown} with an \texttt{AND}-gate on the \gls{psoc}'s \gls{fpga}. This enables the controller to run simultaneous with the rest of the program. The hardware implementation of the \texttt{step} and \texttt{MS1} pin control is illustrated on \autoref{fig:StepperProg}.
+
+\newpage
+To start rotating the motor, the \texttt{stepperSteps} register is set to the desired amount of steps in software, limited to an 8 bit unsigned integer. The direction of the stepper motor is set through the \texttt{stepperDirection} pin, directly to the stepper motor driver. The \texttt{stepperReset} pin is pulsed \texttt{HIGH} and \texttt{LOW} once, to signal the \texttt{stepperCountdown} module a new command is ready to be read from the \texttt{stepperSteps} register. The \texttt{stepperCountdown} module then proceeds to execute the desired amount of steps by setting \texttt{empty} to \texttt{LOW} and decrementing the remaining steps within an internal buffer, until the stepper motor has rotated to the desired position. The \texttt{stepperCountdown} module also ensures that the last 20 steps of a rotation are done in half steps by pulling \texttt{MS1} \texttt{HIGH}, thus smoothing the movement and reducing wobbling of the antenna. The module cannot otherwise be commanded to do half steps. 
+
+\begin{figure}[t]
+	\centering
+	\parnotereset
+	\scalebox{1}{%
+		\begin{tikztimingtable}
+			clk @ 200 Hz & G 1.4H 19{1.4C}\\
+			steps & 8.9D{Previous value} 14.9D{22} 4D{50}\\
+			reset & 9.6L N(A1)0.3H 14.6L N(A2) 0.3H 3L\\
+			halfstep & 11.2H N(A5) 5.6L N(A6) 8.4H N(A4) 2.8L \\
+			empty & 5.6L 5.6H 16.8L\\
+			&\\
+			stepsBuffer & 2.8D{1}2.8D{1} 2.8D{0}2.8D{0} N(B5) N(A3) 2.8D{22}2.8D{21} N(B6) 2.8D{20}2.8D{20}2.8D{19} 2.8D{50} \\
+			resetFlag & 9.6L N(B1) 14.9H N(B2) 3.5L \\
+			resetDoneFlag & [L] 11.2L N(B3) 14H N(B4) 2.8L \\
+			delay & [L]  2.8L 2.8H 14L 2.8H 5.6L \\
+			\extracode
+			\tablerules
+			\begin{pgfonlayer}{background}
+					\foreach \n in {1,...,6}
+					\draw [help lines] (A\n) -- (B\n);
+			\end{pgfonlayer}			
+		\end{tikztimingtable}	}
+		\parnotes
+	\caption{Timings diagram for the \texttt{stepperCountdown} module used in control of the stepper driver implemented on the \gls{fpga}. The number of remaining steps in \texttt{stepsBuffer} is decremented at every rising edge of the clock for full steps, and every second rising edge for half steps. Delay indicates a skipped rising edge for the half steps.}
+	\label{fig:StepperTimer}
+\end{figure}
+
+The \texttt{stepperCountdown} module is driven with a clock of \SI{200}{\hertz}, and reacts to the rising edge of the clock. The \gls{psoc} has hardware to generate clocks of any speeds up to \SI{80}{\mega\hertz} and down to \SI{1}{\kilo\hertz} with the option of clock dividers for even lower frequencies \citep{datasheet:PSoC5LP:_CY8C58LP_Family}. During testing a clock of \SI{200}{\hertz} was used originally, but the duty cycle was found to be different from $50\%$. This difference was large enough to give the motor driver issues in certain cases, so the clock frequency was doubled and run through a flip-flop to ensure a steady duty cycle of $50 \%$. A timing diagram of the \texttt{stepperCountdown} module is illustrated on \autoref{fig:StepperTimer}.
+
+To interface with the \texttt{stepperCoundown} module and control the \texttt{stepperEnable} and \texttt{stepperDirection} pins a program is written in C, as given on \autoref{lst:design:stepperMotorControl}.
+
+\begin{figure} [h!]
+	\lstinputlisting[language = C, caption = {C code for controlling the \texttt{stepperEnable} and \texttt{stepperDirection} pins and interfacing with the \texttt{stepperCoundown} module.}, label = {lst:design:stepperMotorControl}]{appendixCode/StepperMotorControllerReportSnip.c}
+\end{figure}
+
+\newpage
+With the analysis and design of the stepper motor, programmed controller and associated driver complete, the result is an elevation speed of $\omega_\theta =\SI{0.52}{\radian\per\second}$, a stepper frequency of \SI{200}{\hertz} and a supply voltage of \SI{10}{\volt}. The steady-state error is $e_\theta \leq \frac{\theta_{step}}{2}\approx\SI{1.3}{\milli\radian}$ since the \texttt{stepperCountdown} module only receives full steps, and the stepper motor will rotate when the error is more than a half step. 
+
+The design of the both the DC and the stepper motor controllers and drivers are now complete.
+
+\section{Conclusion}
+Controllers and drivers have been designed and constructed for the antenna stand motors. The results of the designs are listed in \autoref{tab:design:conclusionStepper} and \autoref{tab:design:conclusionDC}.
+
+\begin{table}[h]
+	\centering
+	\caption{Table listing parameters of the DC motor driving and control. \autoref{req:mech_speed} is not tested and is therefore only a partial pass.} \label{tab:design:conclusionDC}
+	\begin{tabularx}{\textwidth}{lX}
+		\textbf{DC motor driving and control}   &   \\ \toprule \rowcolor{lightGrey}
+		Required supply voltage         		&   $V_s \geq \SI{4.084}{\volt}$ \\
+		\autoref{req:mech_precision}    		&   To be tested in \autoref{ch:testing} \\ \rowcolor{lightGrey}
+		\autoref{req:mech_speed}    			&   Partial pass, if $V_s \geq \SI{4.084}{\volt}$ \\
+	\end{tabularx}
+\end{table}
+
+\begin{table}[h]
+	\centering
+	\caption{Table listing parameters of the stepper motor driving and control. Requirement \autoref{req:mech_precision} is not tested and is therefore only a partial pass.} \label{tab:design:conclusionStepper}
+	
+	\begin{tabularx}{\textwidth}{lX}
+		\textbf{Stepper motor driving and control} & 				\\ \toprule \rowcolor{lightGrey}
+		Required supply voltage			&  $V_s = \SI{10}{\volt}$ 	\\
+		\autoref{req:mech_precision}	& Partial pass, $e_\theta \leq\SI{1.3}{\milli\radian}\leq \SI{2.08}{\milli\radian}$ 			\\ \rowcolor{lightGrey}
+		\autoref{req:mech_speed} 		& Fail, $\omega_\theta =\SI{0.524}{\radian\per\second} \ngeq  \SI{1.2361}{\radian\per\second}$ 	\\
+	\end{tabularx}
+\end{table}
+
+The DC motor controller is seen to comply with the speed requirements. By compensating for the friction when the voltage falls too low the designed PD controller should be able to comply with the precision requirement. This assumption is tested in \autoref{ch:testing}.
+
+The stepper motor controller complies with the precision requirement as long as the motor has enough torque to rotate the antennas in all cases. By lowering the stepping frequency from 400 to \SI{200}{\hertz} this is seen to be the case. The motor is unable to fulfill the speed requirement.
+
+The necessary connections between the drivers and the \gls{psoc} are listed in \autoref{tab:design:stepperDCControlConclusion}.
+
+\begin{table}[h]
+	\centering
+	\caption{Table listing the name and usage of the required connections between the drivers and the \gls{psoc}}\label{tab:design:stepperDCControlConclusion}
+	
+	\begin{tabularx}{\textwidth}{XXX}
+		\textbf{Driver}	&	\textbf{Pin usage} &  	\textbf{Pin name} \\ \rowcolor{lightGrey} \toprule
+		DC motor				&	Enable	& \texttt{DCMotorEnable}\\
+		DC motor				&	Rotate right	& \texttt{DCMotorRight} \\ \rowcolor{lightGrey}
+		DC motor				&	Rotate left	& \texttt{DCMotorLeft} \\
+		Stepper motor			&	Enable	& \texttt{stepperEnable}\\\rowcolor{lightGrey}
+		Stepper motor			&	Set direction	& \texttt{stepperDirection} \\ 
+		Stepper motor			&	Enable half-step	& \texttt{MS1} \\\rowcolor{lightGrey}
+		Stepper motor			&	Rotate	& \texttt{step}
+	\end{tabularx}	
+\end{table}
+
+With the design of drivers and controllers concluded, the modules of the feedback control system will be connected and attached to the antenna stand in \autoref{ch:implementation}.

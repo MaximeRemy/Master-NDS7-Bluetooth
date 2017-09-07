@@ -1,0 +1,29 @@
+\section{Choosing a frequency} \label{sec:choosing_a_frequency}
+Based on the size of the mechanical platform it is chosen that the receiver antennas should not be placed more the \SI{200}{\milli\meter} apart. The maximum distance between the two antennas should be half the wavelength, as it was shown in \autoref{sec:detSignalDistanceDifference} \citep{TechReport:Amundson2010,TechReport:DirectionFindingPaper}. The wavelength of a signal can be found with \autoref{eq:wavelength}. Combining this equation with the half wavelength distance of the antennas yields \autoref{eq:frequencyforbeacon}. 
+\begin{equation} 
+\lambda = \frac{c}{f} \addunit{\meter} \label{eq:wavelength}
+\end{equation}
+\startexplain
+\explain{$\lambda$ is the wavelength}{\si{\meter}}
+\explain{$c$ is the speed of light}{\si{\meter\per\second}}
+\explain{$f$ is the signal frequency}{\si{\hertz}}
+\stopexplain
+
+\begin{align} \label{eq:frequencyforbeacon}
+f = \frac{c}{2 \cdot x} \addunit{\hertz} 
+\end{align}
+\startexplain
+\explain{$x$ is distance between the antennas}{\si{\meter}}
+\stopexplain
+
+Inserting \SI{200}{\milli\meter} as the maximum distance \autoref{eq:frequencyforbeacon} yields:
+\begin{equation}
+f \geq \frac{3\cdot 10^8~\si{\meter\per\second}}{2 \cdot \SI{200}{\milli\meter}} = \SI{750}{\mega\hertz}
+\end{equation}
+The Danish regulation regarding frequency bands specifies a frequency range between \SI{863}{\mega\hertz} and \SI{876}{\mega\hertz} with a few gaps in between available for low power radio transmitters to use without explicit permission \citep{web:RegulationFreq}. The largest continuous band of available frequencies in this range is \SI{863}{\mega\hertz} to \SI{868.6}{\mega\hertz}. It is chosen to use this band with a center frequency of \SI{864}{\mega\hertz}.
+
+These frequency bands have limitations on the allowed power output and maximum duty cycle. For \SI{864}{\mega\hertz} the maximum allowed power is \SI{25}{\milli\watt} and the duty cycle limit is 0.1\% \citep{web:RegulationFreq869}. In this project the duty cycle limit is not considered further as the chosen solution is unlikely to work without constant transmission. In a real world product the system would either have to respect the duty cycle limits or work at another frequency with less restrictive limits.
+
+One such frequency is \SI{2.4}{\giga\hertz}. The primary reasons against using this band is noise from other systems as many consumer devices use this frequency. The other reason is high frequency effects of electronics get worse with increasing frequency leading to higher loss from potential mismatch. 
+
+Given the limited high frequency board layout experience of the authors \SI{864}{\mega\hertz} is chosen. With the frequency chosen oscillator circuitry is designed.

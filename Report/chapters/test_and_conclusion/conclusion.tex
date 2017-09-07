@@ -1,0 +1,24 @@
+\chapter{Conclusion}
+Todays drones have one notable disadvantage, which is the drones' limited flight time, due to limited battery capacity. This project started out by researching the different methods of \gls{wpt} (in \autoref{ch:WPTPreanalysis}) for the purpose of wirelessly charging a flying drone, thus increasing the drones short flight time. It was found that different methods of \gls{wpt} could be used in different situations but for the purpose of charging a drone, it was assessed that energy carrying electromagnetic waves would be the best solution. 
+
+After the pre-analysis a delimitation and a problem statement was made (in \autoref{ch:ProblemStatement}). The project chose to focus on the tracking aspect of a ground based station for charging drones. It was also chosen to mount a laser pointer on the antenna stand to simulate a \gls{wpt} system. 
+
+To acquire the required knowledge needed to design a system answering the problem statement, a technical analysis was conducted (in \autoref{ch:TechnicalKnowlegde}) in which it was established that an angular precision of the motor stand of \SI{2,083}{\milli\radian} is needed in order to aim the laser pointer within $\pm \SI{250}{\milli\meter}$ of the drone's center point, at a range of \SI{120}{meter}. 
+
+With the needed angular precision calculated, the different methods which could be utilised to track the drone was investigated. The conclusion was that the best way to find the \gls{aoa} of the drone is to determine the signal distance difference by analysing the phase difference between a signal captured in two or more receiver antennas.
+
+The technical analysis also conducted a detailed analysis of the antenna stand and its attached motors. The transfer function, describing the azimuth angle of the antenna stand, in relation to the input voltage of the DC motor, is determined.
+
+The technical analysis leads to technical requirements for a prototype tracking system in \autoref{ch:SystemRequirements}).
+
+In \autoref{pt:design} a system was designed to solve the problem statement. The solution consists of a two part system: a tracking part which consists of a transmitter and a receiver, and a mechanical part which controls the direction of the antenna stand.
+
+The transmitter has to be mounted on the drone and consists of an oscillator, an amplifier and a omnidirectional antenna. This way the transmitter is able to transmit a continuous sinusoid signal at a frequency of \SI{869}{\mega\hertz}. 
+
+The mechanical motorised antenna stand has three patch antennas mounted in a "L" formation on top. The antennas are used to capture the continuous signal from the transmitter. The captured signal is frequency converted to lower frequency before it is sampled by a \gls{psoc}. The phase difference between the three captured signals is then used to determine the relative direction of the transmitter. 
+
+When the receiver has calculated the direction of the transmitter, the antennas stand rotates in both azimuth and elevation direction making the antenna stand point at the transmitter on the drone. The antenna stand's movement has to be fast and precise, for the azimuth direction this is ensured by applying a \gls{pd} controller. 
+
+With a system designed and constructed an acceptance test was conducted in order to determine whether the system satisfies the system requirements (in the \autoref{ch:testing}). However, the test is not definitive because not all requirements were tested due to the design being limited by an apparent unstable free running oscillator. The results of the test shows that the system satisfies 5 out the 10 requirements set for the system. However, the test shows that the methods chosen are feasible, but for this project the set requirement tolerances are not achieved. 
+
+Even though the accept test was inconclusive and some of the requirement are not satisfied, the project is assessed to be a success, since the system has shown to work with a high precision in controlled situation, thus proving the concept. 

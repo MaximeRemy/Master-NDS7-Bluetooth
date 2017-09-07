@@ -1,0 +1,34 @@
+\graphicspath{{figures/tracking/}}
+
+\section{Tracking the drone} \label{sec:TrackingTheDrone}
+It was found in the preanalysis (\autoref{sec:ConclusionWPT}), that the \gls{wpt} is directional therefore the power transmitter on the ground station needs to be pointing directly at the power receiver on the drone. In order to point the motorised antenna stand in the right direction, the direction of the drone is needed. 
+
+To describe the position of a drone flying in the air relative to the base station (the antenna stand), a spherical coordinate system is introduced. A point is space is associated with a distance from the origin to the point, $r$, an azimuth angle, $\phi$ and an elevation angle which is the angle between the origin, the point and the positive z-axis, $\theta$ \citep{book:calculus}. This is illustrated in \autoref{fig:spherecoords}.
+\begin{figure} [h!]
+\centering
+\includegraphics[width=0.4\linewidth]{3D_Spherical}
+\caption{Spherical coordinates of a point in space \citep{website:spherecoords}.}
+\label{fig:spherecoords}
+\end{figure}
+
+Once $\phi$ and $\theta$ are acquired this is sufficient to point the antenna is the right direction.
+Several methods for measuring and determining $\phi$ and $\theta$ are investigated in this section. 
+Before starting to research different methods of tracking the drone, the required precision of the tracking is determined. Now that the required precision is known and the the coordinate system is defined different tracking methods are studied.
+\begin{itemize}
+\item Optical tracking
+\item \glsentrylong{aoa} determination from signal distance difference
+\begin{itemize}
+\item Time of arrival 
+\item Phase difference detection 
+\item Signal strength difference
+\end{itemize}
+\item GPS 
+\item Radar
+\end{itemize}
+
+\input{chapters/Part1/tracking/direction_measurement}
+
+\input{chapters/Part1/tracking/Both_measurement.tex}
+
+\input{chapters/Part1/tracking/TrackingConclusion.tex}
+

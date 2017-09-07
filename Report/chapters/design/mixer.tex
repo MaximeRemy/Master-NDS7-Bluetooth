@@ -1,0 +1,160 @@
+\section{Frequency mixer} \label{sec:tracking_mixer}
+
+A mixer is an electronic circuit that performs a multiplication of two input signals. The symbol of a mixer is seen on \autoref{fig:mixer_symbol}. Typically one of the two inputs is a \glsentrylong{lo} (\glsentryshort{lo}) which oscillates at some fixed predefined frequency.
+\begin{figure} [h!]
+\centering
+\includegraphics[width=0.3\linewidth]{mixer_component}
+\caption{Symbol of frequency mixer.}
+\label{fig:mixer_symbol}
+\end{figure}
+
+Mixers are useful for modulating or demodulating signals. When the mixer's input is a cosine at frequency $f_{RF}$, and the \gls{lo} is a cosine at frequency $f_{LO}$, the output signal contain components of both signals as seen in \autoref{eq:basic_mixer}.
+\begin{subequations}\label{eq:basic_mixer}
+\begin{align} 
+S_o &= \cos \left( {2\pi f_{RF} \cdot t} \right) \cdot \cos \left( {2\pi f_{LO} \cdot t} \right) \addunit{V}  \\
+&= \frac{1}{2} \left[ \cos \left( {2\pi (f_{RF} + f_{LO}) t} \right) + \cos \left( {2\pi (f_{RF} - f_{LO}) t} \right) \right] \addunit{V}\label{eq:basic_mixer2}
+\end{align}
+\end{subequations}
+\startexplain
+\explain{$S_o$ is the resulting signal}{\si{\volt}}
+\explain{$f_{RF}$ is the radio frequency}{\si{\hertz}}
+\explain{$f_{LO}$ is the local oscillator frequency}{\si{\hertz}}
+\explain{$t$ is the time}{\si{\second}}
+\stopexplain
+
+
+If the frequencies $f_{RF}$ and $f_{LO}$ are equal the result is a cosine of twice the frequency and a DC level. 
+\begin{equation}
+S_o =\frac{1}{2} \left[ \cos \left( {2\pi (2 \cdot f_{RF}) t} \right) + 1 \right] \addunit{V} \label{eq:basic_mixerDC}
+\end{equation}
+
+This property can be used to measure the phase difference between two signals. If one of the signals from \autoref{eq:basic_mixer} contains a phase shift compared to the other, the DC level is directly affected. \autoref{eq:mixer_phase} is an example of this.
+\begin{subequations} \label{eq:mixer_phase}
+\begin{align} 
+S_o &= \cos \left( {2\pi f_{RF} \cdot t + \varphi } \right) \cdot \cos \left( {2\pi f_{RF} \cdot t} \right) \addunit{\volt}  \\
+&= \frac{1}{2}\left[ {\cos \left( {2\pi (2 \cdot f_{RF}) t + \varphi } \right) + \cos \left( \varphi  \right)} \right] \addunit{\volt}
+\end{align}
+\end{subequations} 
+
+The DC level is represented by the constant $\cos \left( \varphi  \right)$. Additionally the high frequency part has the same phase. The output signal is low-pass filtered to remove the high frequency part leaving:
+\begin{equation} \label{eq:mixerPhaseDiff1}
+	S_{o-DC} = \frac{1}{2}  \cos \left( \varphi  \right) \addunit{\volt}
+\end{equation}
+
+The phase difference $\varphi$ can then be extracted as shown in \autoref{eq:mixerPhaseDiff2}.
+\begin{equation}
+	\varphi = \arccos(2 \cdot S_{o-DC}) \addunit{\radian} \label{eq:mixerPhaseDiff2}
+\end{equation}
+
+The theory described above applies for ideal mixers. Mixers are nonlinear devices created from nonlinear devices and therefore carry imperfections. One of the concerns is harmonics. The output signal of a real world mixer contain parts of the original signals as well as harmonics of the inputs. To filter off harmonics a low-pass filter is used.
+
+Real world devices are additionally specified within certain limits. The main limits for the use case of this project are input and output power levels, impedances and frequency limits.
+
+\subsection{Mixer circuit design} \label{sec:mixercircuitdesign}
+The system overview on \autoref{fig:tracking_overview} shows the placement of the mixers in the full system. The main requirement for the chosen mixer device is the lower frequency limit. The wanted input frequency is \SI{869}{\mega\hertz} and the wanted output frequency is ideally \SI{0}{\hertz}. The available mixers that can receive above \SI{800}{\mega\hertz} and output DC is limited to more expensive solutions than what was available during the development of this project and a compromise is made. The requirement for the frequency of the output is raised to \SI{500}{\kilo\hertz}, which is the highest frequency signal that the \gls{adc} can sample and still be within the Nyquist sampling theorem. The \gls{adc} is described further in \autoref{sec:adc}.
+
+Secondary requirements to the mixer include input and output power, the mixer gain and the input and output impedance. 
+The first concern is the power levels. The oscillator has a specified output power of \SI{-3}{\deci\belm} \citep{datasheet:MAX2622} but the designed oscillator outputs \SI{-8}{\deci\belm}. If the mixers are driven from different oscillators any phase difference between the two oscillator signals directly affect the signal. All the mixers have to run off of the same oscillator and the power is split. To reduce the noise on the \gls{lo} signal the amplification should be reduced as much as possible. These two concerns create a requirement for the mixers' input power level to be within \SI{10}{\decibel} of the output level of the oscillator.
+
+Thirdly, as calculated in \autoref{sec:transmitter_power} the incoming power to the mixers is very low. To minimize the amount of extra components required in the signal path, as much gain as possible is wanted in the mixer.
+
+And last, the inputs and outputs of the mixer should be matchable to \SI{50}{\ohm} to ensure good signal integrity and power transfer.
+
+Based on the requirements, the Linear Technology LT5560 low power active mixer is chosen. The LT5560 is a high-performance broad-band mixer useful for both up- and down-conversion \citep{datasheet:LT5560}. The mixer fulfills the requirement for a low lower \gls{if} limit with the device being specified down to \SI{10}{\kilo\hertz}. The \gls{lo} input power is typically in the range \SI{-6}{\deci\belm} to \SI{1}{\deci\belm} which requires no amplification in the case of one mixer. The mixer has a conversion gain of around \SI{2}{\decibel} at \SI{900}{\mega\hertz} and the gain is quite linear in a range of about \SI{150}{\mega\hertz} around this point. The mixer's datasheet \citep{datasheet:LT5560} has application notes concerning impedance matching, enabling easy adaptation for a \SI{50}{\ohm} matched application at \SI{869}{\mega\hertz}. 
+
+\subsection{Downconversion} \label{subsec:downconversion}
+Because of the lower specified frequency limit of \SI{10}{\kilo\hertz} a frequency component on the signal output of the mixer is required. The frequency of the signal after the mixing is known as an \glsentrylong{if} (\glsentryshort{if}). This signal is later mixed again, as mentioned in \autoref{sec:calc_of_phase}.
+
+As specified in \autoref{sec:adc} the \gls{adc} can sample \SI{1}{} \gls{msps}. To get a good number of samples of every wave of the output, the output frequency $\Delta f$ is chosen as $\frac{1}{3}$ of the sampling frequency $f_s$.
+\begin{equation}
+	\Delta f = \frac{f_s}{3} = \SI{333}{\kilo\hertz}
+\end{equation}
+The output is shifted to a frequency of $\Delta f$ by making the local oscillator frequency $f_{RF} + \Delta f$. The output becomes a signal with two frequency components as seen in \autoref{eq:mixer_down_convert}. The RF signal contains the phase component in the new lower frequency.
+\begin{subequations}
+\begin{align}
+S_o &= \cos \left( {2\pi f_{RF} \cdot t + \varphi } \right)\cos \left( {2\pi \left( {f_{RF} + \Delta f} \right)t} \right) \addunit{\volt}  \label{eq:mixer_down_convert}  \\ 
+ &= \frac{1}{2}\left[{\cos \left( {2\pi \left( {2f_{RF} + \Delta f} \right)t + \varphi } \right) + \cos \left( { 2\pi \Delta f \cdot t - \varphi } \right)} \right] \addunit{\volt} \label{eq:mixer_down_convert2} 
+\end{align}
+\end{subequations}
+As in \autoref{eq:mixer_phase} the signal contains a high frequency components, low frequency components and harmonics, all of which contain the phase information. The high frequency part and harmonics are removed with a low-pass filter leaving only the low frequency \gls{ac} signal, as seen in \autoref{eq:mixer_down_convert_filtered}.
+\begin{equation}
+S_{o-filtered} = \frac{1}{2}  \cos(2\pi \Delta f \cdot t - \varphi) \addunit{\volt} \label{eq:mixer_down_convert_filtered} 
+\end{equation}
+
+This down-conversion is applied to two incoming signals with differing phase contributions. By applying the same \gls{lo} in mixing both signals, any phase difference compared to the oscillator is cancelled out.
+The low frequency signals with phase components are later sampled by an \gls{adc} and the phase information in each signal is used. This is covered in detail in \autoref{sec:calc_of_phase}.
+
+\subsection{Impedance matching}
+Based on the RF chosen in \autoref{sec:choosing_a_frequency}, the \gls{if} and the characteristics of the mixer given by its datasheet \cite{datasheet:LT5560} the circuitry for impedance matching is constructed. There are three parts to the matching-design: the RF-input, the LO-input and the IF-output. All input and outputs are wanted as single-ended, but all inputs and outputs of the LT5560 are balanced so this is considered as well.
+
+The LO-input is driven single ended, based on the typical application diagram \citep{datasheet:LT5560}. It is chosen to use the typical application and test the real world performance. A matching of the LO-input is seen on \autoref{fig:match_smith}. The circle illustrates an SWR of 2, and everything within is better. The matching is deemed sufficient.
+
+\begin{figure} [h]
+\centering
+\includegraphics[width=1\textwidth]{mixer_lo_matching_smith_cutout}
+\caption{A smith chart cutoff of the LO-input matching. The circle indicate \gls{swr}$<$2, where the reflection in less. The dot indicates the impedance before matching and the cross is the impedance after matching.}
+\label{fig:match_smith}
+\end{figure}
+
+As three mixers are driven from the same oscillator a power splitter should ideally be used. To simply the design, the return loss of splitting the \SI{50}{\ohm} matched output into the three mixers is accepted and not considered further.
+
+The RF-input matching is a lumped element matching based on the section of the datasheet describing the technique \citep{datasheet:LT5560}. \autoref{fig:lumped_element_matching} shows a balun (Balanced to Unbalanced) connection used in lumped element matching. $R_A$ represents the impedance to match to; in this case \SI{50}{\ohm}. $R_B$ is the differential resistance to match, which in the case of the RF-input is specified as \SI{28,8}{\ohm} at both \SI{760}{\mega\hertz} and \SI{900}{\mega\hertz}. The resistance is assumed linear in the region and the calculation is made for \SI{869}{\mega\hertz}.
+
+\begin{figure} [h]
+	\centering
+	\includegraphics[width=0.4\textwidth]{lumped_element_matching}
+	\caption{Circuit realization for doing lumped element matching \citep{datasheet:LT5560}.}
+	\label{fig:lumped_element_matching}
+\end{figure}
+
+The calculation of the sizes of the lumped capacitors and inductors are given as
+\begin{equation}
+	L_0 = \frac{\sqrt{R_A \cdot R_B}}{2\pi f_{RF}} \addunit{\henry}
+\end{equation}
+and
+\begin{equation}
+	C_0 = \frac{1}{\sqrt{R_A \cdot R_B} \cdot 2\pi f_{RF}} \addunit{\farad}
+\end{equation}
+The values for \SI{869}{\mega\hertz} are calculated. Firstly the inductors.
+\begin{equation}
+	L_0 = \frac{\sqrt{\SI{50}{\ohm} \cdot \SI{28.8}{\ohm}}}{2\pi \cdot \SI{864}{\mega\hertz}} \approxeq \SI{6,95}{\nano\henry} \xrightarrow{E6} \SI{6,8}{\nano\henry}
+\end{equation}
+Then the capacitors.
+\begin{equation}
+C_0 = \frac{1}{\sqrt{\SI{50}{\ohm} \cdot \SI{28.8}{\ohm}} \cdot 2\pi \cdot \SI{869}{\mega\hertz}} \approxeq \SI{4.88}{\pico\farad} \xrightarrow{E6} \SI{4,7}{\pico\farad}
+\end{equation}
+
+
+\subsubsection*{Output matching}
+When matching the output of the mixer there are two main considerations: matching the output impedance of the mixer and amplifying the signal further.
+
+\begin{figure} [h]
+\centering
+\includegraphics[width=1\linewidth]{mixer_output}
+\caption{Cutout of the mixer schematic with output matching of the LT5560 based on the datasheet \cite{datasheet:LT5560} and additional amplification.}
+\label{fig:mixer_output}
+\end{figure}
+
+The impedance matching is based on Figure 21 of the datasheet \citep{datasheet:LT5560}. This figure gives an example of how to use an operation amplifier in a differential amplifier setup to make the balanced to unbalanced conversion. The op amp additionally biases the signal level to \SI{2.5}{\volt}, which is half of the power supply voltage. Both output pins need to biased to the supply voltage. R301 and R302 on \autoref{fig:mixer_output} provide this bias and C308 and C309 AC-couple the signal. With the matching established, the signal level is adjusted.
+
+The signal power level received by the mixers is estimated to be at least \SI{-62,14}{\deci\belm} in \autoref{sec:transmitter_power}. The LT5560 has \SI{2}{\decibel} - \SI{3}{\decibel} gain giving an estimated output of at least \SI{-60,14}{\deci\belm}. To get minimal quantization error when measuring, the amplitude of the signal should be as high as possible within the measuring limits of the \gls{adc}. Calculations on the quantization error are expanded in \autoref{subsec:quantization_error}. The signal swing of the output with a power of \SI{-60,14}{\deci\belm} is 
+\begin{equation}
+	\sqrt{\SI{968}{\pico\watt} \cdot 50~\si{ohm}} \approxeq \SI{0,227}{\milli\volt}_{rms} = \SI{0,321}{\milli\volt}_{amplitude}
+\end{equation}
+
+This is a very low voltage swing compared to the \SI{2}{\volt} range of the \gls{adc} and amplification is wanted to get better resolution. 
+The requirements for the design are based on the \gls{adc} specifications. The range of the \gls{adc} on the \gls{psoc} can be changed during compile time to different values. The lowest internal voltage reference available is 0~-~\SI{2,048}{\volt} range represented with 12 bits, giving a resolution of \SI[per-mode=symbol]{0,50}{\milli\volt\per\bit}. 
+To aquire a useful reading it is estimated that at least 12 data points are required to represent the signal swing and thus an amplification of 10 times is wanted. Additionally the signal should be biased to around \SI{1,024}{\volt} DC to make sure all signal components are within the range of the \gls{adc}. 
+
+To amplify the signal a TS462 operational amplifier is used because its low noise and availability during the design. The TS462 comes in packages of two op amps. The first one is used to provide the balanced to unbalanced effect and the second one is used to amplify the signal further. It is chosen not to use a negative power supply and therefore the bias level is kept between the op amps. To let the signal stay within the \SI{5}{\volt} of the power supply the bias is lowered to \SI{1,25}{\volt} at the voltage divider next to R303 on \autoref{fig:mixer_output}. 
+
+The output of the second op amp is AC-coupled and biased to approximately \SI{1}{\volt}. The capacitors on the voltage dividers are used to filter out power supply noise.
+
+The full circuit for the LT5560 is seen in \autoref{appendix:mixerfig}. 
+
+
+The low frequency signal from the mixer is the signal of interest, but discussed earlier it is seen that a high frequency component is also present on the output. The low frequency component is at a frequency of $\Delta f = \SI{333}{\kilo\hertz}$, and the high frequency component is at a frequency of 
+\[ 2f_{RF} + \Delta f = 2 \cdot 869 \cdot 10^{6} + 333 \cdot 10^{3} = \SI{1,971}{\giga\hertz}.\]
+While the TS462 does not have a gain above 1 at \SI{2}{\giga\hertz}, a filter is wanted to reduce the high frequency part of the signal further.
+
+\input{chapters/design/LPFilter}

@@ -1,0 +1,18 @@
+\subsection{Beacon signal}
+\todo[author=Jimmy, inline]{Since the different methods have different requirements to the beacon signal, maybe you need to describe what kind of signal is needed for each, instead of a general discussion? (Alexander: I guess this means writing a small description in every section above. I agree, this subsection should be written into the above)}
+
+It was found in the \autoref{sec:TrackingTheDrone} that the majority of methods which can be used to detection and track the drones position all rely on having the drone emitting a beacon signal. 
+
+In this section this beacon signal will be analysed, in order to fully understand the process of tracking a drone. 
+
+A beacon is an object that intentionally attracts attention to a specific location. In this case the beacon attracts attention to the drones location, by emitting a beacon signal made by a electromagnetic wave. 
+
+The frequency and characteristics of the emitted beacon signal, have  to match the the design of the receive or vice versa. 
+
+The beacon signal needed for the time of arrival method, which is explained in \autoref{TimeOfArrival}, should be an impulse. The beacon should emit an impulse whenever the position of the drone is needed. If the drone moves a new impulse must be emitted in order for the ground station to know the new location of the drone. 
+
+With both the signal strength difference and the phase difference detection methods, explained in \autoref{SignalStrengthDifference} and \autoref{PhaseDifferenceDetection} respectfully, the beacon needs to emit a beacon signal consisting of a continuous magnetic wave. 
+
+The needed beacon signals can be made in many different ways,  
+dependent on the wanted frequency. If a specific frequency is wanted a specificity designed transmitter circuit is needed. 
+If a normalised frequency is sufficient a general purpose transmitter might be used, for example, if the desired frequency is 2,4 Ghz, a WI-Fi card or a Bluetooth module be able to emit the wanted beacon signal. 

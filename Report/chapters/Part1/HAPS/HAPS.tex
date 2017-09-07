@@ -1,0 +1,34 @@
+\section{\glsentryshort{haps}}
+\gls{haps} is defined in \cite{manual:radio_regulation} Radio Regulations No. S1.66A as “A station located on an object
+at an altitude of 20 – \SI{50}{km} and at a specified, nominal fixed
+point relative to the Earth”.
+The first HAPS developed were for military use for two specific tasks, the first one being field surveillance and the second one acting as a relay for wireless communication. 
+Two publicly known \gls{haps} projects from USA are the Lockheed Martin High Altitude Airship and the project HiSentinel. The ambition of military is to get services akin to a satellite for a lower operational cost.
+\todo[author=Alexander]{Add source with different HAPS models}
+
+However \gls{haps} platforms could also fill some roles for the commercial space in the near future. The constantly increasing need for high-speed wireless communications and communication in remote areas make \gls{haps} a good area of study. 
+Thanks to its privileged position at an altitude of 17 to \SI{22}{km} it will be able to ignore any geographical restriction imposed by the region, centralize the network and allow better repartition of the resources. 
+Furthermore its cost can  be potentially less than a ground station, as a suitable site does not need to be acquired first and a need of relays to spread the network everywhere in the region may be avoided depending on the range of the \gls{haps}.
+\todo[author=Alexander]{Add the researchgate source.}
+
+\begin{figure} [h]
+	\centering
+	\missingfigure{Figure showing the altitude, range or something else about HAPS}
+	\caption{xxx}
+	\label{fig:XXXX}
+\end{figure}
+
+\todo[author=Alexander]{Maybe an example would be nice.}
+
+One of the largest problems with current \gls{haps} technology (\todo[author=Alexander]{Source?}) is power.
+During the day the solar energy is enough to entirely power the HAPS. \todo[author=Alexander]{Source?} However at night solar power is not available forcing the HAPS to get power elsewhere. Current \gls{haps} projects use batteries for overnight power because the distance between the \gls{haps} and the ground is too large for any wired powering.
+This presents a problem. The batteries for powering a \gls{haps} for a full night are large and heavy. Using data from \todo[author=Alexander]{Source} a quick estimate of the battery size can be made.
+
+\gls{haps} as network stations have three main sources of power consumption; engines, payload and maintenance. An estimated total of around \SI{115}{kW} is required [\todo[author=Alexander,inline]{Same source as above}]. If we consider an average night to be 12 hours then a \gls{haps} has to be able to store at least \SI{1380}{kWh} in the batteries. A typical lithium ion battery has an energy density of around \SI{5,8}{\kilo\watt\hour\per\kilogram}. \todo[author=Alexander]{Source?}
+
+\begin{equation} \label{eq:HAPS_battery_weight}
+	\frac{\SI{1380}{\kilo\watt\hour}}{\SI{350}{\watt\hour\per\kilogram}} = \SI{3942}{\kilogram}
+\end{equation}
+By removing the batteries alone, without considering housing or power conversion circuitry, \autoref{eq:HAPS_battery_weight} show a \gls{haps} could save almost \SI{4000}{\kilogram} of mass.
+
+This saving makes \gls{haps} an obvious target for wireless power transfer.

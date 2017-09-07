@@ -1,0 +1,45 @@
+\section{Oscillator circuitry design}\label{sec:designOscillator}
+The oscillator circuitry is designed around a \gls{vco}. A \gls{vco} is a device used to provide an \gls{ac} signal at a frequency dependent by a input voltage.
+
+
+For this project the oscillator MAX2622 is chosen \citep{datasheet:MAX2622}. This oscillator has a bandwidth that goes from \SI{855}{\mega\hertz} to \SI{881}{\mega\hertz}, which matches the chosen frequency. Later it become apparent that the oscillator is temperature sensitive. A change in temperature create a frequency drift in the oscillator as shown on \autoref{fig:temperatureSensivityVco} \citep{datasheet:MAX2622}.
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.6\linewidth]{figures/design/CurveOfTemperatureForMax2622}
+	\caption{The temperature curves of the \gls{vco} MAX2622 \citep{datasheet:MAX2622}. }
+	\label{fig:temperatureSensivityVco}
+\end{figure} 
+
+If the oscillator is tuned to output a signal of \SI{864}{\mega\hertz} at \SI{25}{\degreeCelsius}, and the temperature of the system drops to \SI{-40}{\degreeCelsius}, a rough estimation of the drift is \SI{22}{\mega\hertz} according to \autoref{fig:temperatureSensivityVco} from the datasheet. 
+
+Frequency drift is undesirable and can be avoided in different ways. A way to avoid frequency drift is to control the tune voltage of the \gls{vco}  with a \gls{pll} circuit. A \gls{pll} works by having a phase detector, which detects the phase different between output signals of the \gls{vco} and a reference signal. This phase difference is used in a feedback loop to adjust the tuning voltage. A \gls{pll} design, is considered too time consuming for this project, and is therefore discarded for a simpler design.
+
+The frequency can also be adjusted by manually adjusting a potentiometer in the \gls{vco} circuit before each flight. When the frequency changes because of the temperature change the two \gls{vco}s could have to be manually aligned. This is jugded to be manageable in the prototype. Adjusting the potentiometer change the tuning voltage. For this project the simple potentiometer approach is chosen based on its simplicity and availability, even though a \gls{pll} would be the ideal solution. 
+
+\subsection{Oscillator circuit design}\label{sec:oscillatorDesign}
+Two oscillator circuits are needed: one on the transmitter and one on the receiver. The oscillator's frequencies should be fixed at \SI{864}{\mega\hertz} as chosen in \autoref{sec:choosing_a_frequency}. 
+
+In order to have the oscillator output the wanted frequency a tune voltage is needed. As mentioned in \autoref{sec:designOscillator}, the tune voltage is controlled by a potentiometer. If the potentiometer can change the tune voltage \SI{1}{\volt}, the output frequency can be varied at least \SI{95}{\mega\hertz}.  
+
+It is chosen to tune the voltage between \SI{0.8}{\volt} and \SI{1.8}{\volt} where the frequency \SI{864}{\mega\hertz} is within the bandwidth. 
+
+A \SI{1}{\kilo\ohm} potentiometer and a voltage divider circuit as seen on \autoref{fig:oscillatorCircuitDiagram} is calculated to tune the voltage. 
+\begin{subequations}
+\begin{align} 
+\SI{0.8}{\volt} &= \SI{5}{\volt} \cdot \frac{R_2}{R_1 + R_2} \\
+\SI{1.8}{\volt} &= \SI{5}{\volt} \cdot \frac{R_2 + \SI{1000}{\ohm}}{R_1 + R_2 + \SI{1000}{\ohm}}\\
+\implies R_1 &= \SI{2688}{\ohm} \xrightarrow{E96} \SI{2670}{\ohm} \\
+\implies R_2 &= \SI{512}{\ohm} \xrightarrow{E96} \SI{511}{\ohm}
+\end{align} \label{eq:osciristor}
+\end{subequations}
+
+\newpage
+The datasheet \citep{datasheet:MAX2622} recommends decoupling capacitors $C2$, $C3$ and $C4$ for better high frequency performance and low noise. $C1$ is decoupling on leg 2 carrying the tuning voltage $V_{tune}$. Decoupling on $V_{tune}$ is needed to minimize noise from the power rail. Any noise on $V_{tune}$ results in frequency noise. No matching is done on the output, as the oscillator is internally matched to \SI{50}{\ohm}. The oscillator is designed as shown on \autoref{fig:oscillatorCircuitDiagram}. 
+\begin{figure}[h!]
+    \centering
+        \includegraphics[width=0.8\textwidth]{figures/design/oscillator/oscillatorCircuitDiagram}
+        \caption{The oscillator circuit diagram.}
+        \label{fig:oscillatorCircuitDiagram}
+\end{figure}
+
+Tests show that the oscillator circuit outputs \SI{-8}{\deci\belm}. With the designed oscillator circuit the antennas are now designed. 

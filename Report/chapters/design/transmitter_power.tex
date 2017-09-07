@@ -1,0 +1,82 @@
+\newpage
+\section{Power transmission} \label{sec:transmitter_power}
+To locate the drone it needs to be able to transmit the beacon signal. The signal frequency has been chosen to \SI{869}{\mega\hertz}, the \gls{vco} MAX2622 has been chosen and receiver antennas are patch antennas with 22\% efficiency and \SI{0.03}{\deci\beli} gain measured and the transmitter antenna with \SI{2.49}{\deci\beli} gain.
+
+In \autoref{PhaseDifferenceDetection} \autoref{eq:phase_reqsnr} determined a required \gls{snr} to be $> \SI{46.7}{\decibel}$. The transmitted power that are required to achieve that \gls{snr}, can be calculated using Friis equation and an estimation for the power of the noise. In this project it is delimited from taking noise factor in components used into account. 
+
+\subsection{Power of received noise}
+The noise can be estimated by a simple approximation that states, for every \si{\hertz} of bandwidth the power of the noise is \SI{-174}{\deci\belm} \citep{web:NoiseWave}.
+The 1 \gls{msps} sampling rate of the \gls{psoc} can't handle the \SI{869}{\mega\hertz} signal, so a low-pass filter is designed to have a cutoff frequency of \SI{500}{\kilo\hertz}. Therefore the bandwidth is \SI{1}{\mega\hertz} since any noise \SI{500}{\kilo\hertz} below the transmitting frequency and \SI{500}{\kilo\hertz} above the transmitting frequency is included in the signal.
+The power of the noise can be approximated with \autoref{eq:PhaseDettection:NoisApprox}. 
+\begin{subequations}
+\begin{align} 
+P_{n} &= \SI{-174}{\deci\belm\per\hertz} + 10 \cdot \log_{10}(B) \addunit{\deci\belm} \label{eq:PhaseDettection:NoisApprox}\\
+			 &= \SI{-174}{\deci\belm\per\hertz} + 10 \cdot \log_{10}(\SI{1}{\mega\hertz}) = \SI{-114}{\deci\belm} \label{eq:PhaseDettection:NoisApproxFoundValue}
+\end{align}
+\end{subequations}
+\startexplain
+\explain{$P_{noise}$ is the power of the noise}{\si{\deci\belm}}
+\explain{$B$ is the Bandwidth}{\si{\hertz}}
+\stopexplain
+
+\subsection{Power of received signal}
+With the power of the noise determined to be \SI{-114}{\deci\belm}, the needed power of the signal can also be determined if \gls{snr} $>\SI{46.7}{\deci\bel}$. This calculation is in \autoref{eq:PhaseDettection:NeededPoserOfSignalFoundValue}. 
+	
+
+\begin{equation}
+P_{s} \geq \SI{-114}{\deci\belm} + \SI{46.7}{\deci\bel} = \SI{-67.3}{\deci\belm} \label{eq:PhaseDettection:NeededPoserOfSignalFoundValue} 
+\end{equation}
+\startexplain
+\explain{$P_{s}$ is the power of the signal}{\si{\deci\belm}}
+\stopexplain
+
+This is the very minimum required signal power, and does not account for the noise in amplifiers and other components.
+
+\subsection{Transmission power}\label{sec:transmissionPower}
+From \autoref{eq:PhaseDettection:NeededPoserOfSignalFoundValue} it is seen that a received signal strength of minimum \SI{-67.3}{\deci\belm} is needed to have an acceptable \gls{snr}. A simplified version of Friis transmission equation is used to approximate the needed transmission power in order to receive \SI{-67.3}{\deci\belm}. 
+\begin{subequations}
+\begin{align} 
+P_{r} &= G_tG_r \cdot \left(\frac{\lambda}{4\pi\cdot d}\right)^{2} \cdot P_{t}\label{eq:PhaseDettection:FrissIsAcoolGuy1} \addunit{\watt}\\
+P_{t} &= P_{r} \cdot \left(G_tG_r\right)^{-1} \cdot \left(\frac{\lambda}{4\pi\cdot d}\right)^{-2} \label{eq:PhaseDettection:FrissIsAcoolGuy2} \addunit{\watt}
+\end{align}
+\end{subequations}
+\startexplain
+\explain{$P_{t}$ is the power of the transmitted signal}{\si{\watt}}
+\explain{$P_{r}$ is the power of the received signal}{\si{\watt}}
+\explain{$G_t$ is the gain of the transmitter antenna}{\noSIunit}
+\explain{$G_r$ is the gain of the receiver antenna}{\noSIunit}
+\explain{$\lambda$ is the wavelength of the transmitted signal in the medium, in this case air}{\si{\meter}}
+\explain{$d$ is the distance between the receiver and the transmitter}{\si{\meter}}
+\stopexplain
+
+Using \si{\decibel} for gain and \si{\deci\belm} as a unit for power \autoref{eq:PhaseDettection:FrissIsAcoolGuy2} becomes \autoref{eq:FriisdB}.
+\begin{equation} \label{eq:FriisdB}
+P_t = P_r - G_t - G_r - 20\log_{10}\left(\frac{\lambda}{4\pi d}\right) \addunit{\watt}
+\end{equation}
+
+The distance is set to be the maximum required \SI{120}{\meter} and a frequency of \SI{869}{\mega\hertz}. 
+The realized gain of the receiver antenna is taken to be the maximum gain \SI{0}{\decibel}, as this is when the receiver antennas are directly pointed at the transmitter and it is in this case when the precision is needed most. The transmitting antenna has a gain of \SI{2.49}{\deci\beli} as stated in \autoref{sec:AntennaTest}. \autoref{eq:FriisdB} then gives \autoref{eq:PhaseDettection:NeededTransmisionPower}.
+\begin{align} 
+P_t \geq \SI{-67.3}{\deci\belm} - \SI{2.49}{\decibel} - \SI{0}{\decibel} - 20\log_{10}\left(\frac{\frac{c}{\SI{869}{\mega\hertz}}}{4\pi \SI{120}{\meter}}\right) = \SI{3.02}{\deci\belm} \label{eq:PhaseDettection:NeededTransmisionPower}
+\end{align}
+
+It is found that in order to have an \gls{snr} of \SI{46.7}{\deci\bel} when the antennas are pointed directly at each other, the signal should be transmitted with a power greater than \SI{3.02}{\deci\belm}. 
+
+As mentioned in \autoref{sec:oscillatorDesign} the oscillator circuit outputs \SI{-8}{\deci\belm}. This means that the power has to be amplified so that \autoref{design:eq:transmitterAmplifierRequirement} is fulfilled.
+\begin{equation}
+- \SI{8}{\deci\belm} + A_{dB} \geq \SI{3.02}{\deci\belm}\label{design:eq:transmitterAmplifierRequirement}
+\end{equation} 
+
+It is therefore concluded that the oscillator should be applied an amplification of $A_{dB} \geq \SI{11.02}{\deci\bel}$ to achieve an acceptable \gls{snr}.
+
+\subsection{Amplifier}
+An amplifier is designed the oscillator output to achieve an acceptable \gls{snr} and to transmit higher power from the transmitter antenna to the receiver antennas. A circuit with a MAR3 \citep{datasheet:MAR3} and a MSA-1105 \citep{datasheet:MSA1105} is designed, based on the fact that they at frequencies up to \SI{1}{\giga\hertz}, the sum of the amplification is \SI{24.5}{\decibel} and availability during design. 
+
+The transmitter circuit consists of the oscillator, the amplifier and the transmitter antenna attached to a drone with a battery to supply the power. A \SI{9}{\volt} battery is chosen as the power supply. The datasheet has a recommended application circuit and a table with resistor values for optimum bias that are used \citep{datasheet:MAR3}. A diagram of the circuit can be seen on \autoref{fig:TransAmp}. 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/design/TransmitterAntenna/Amplifier}
+\caption{A circuit diagram of the amplifier. C1, C2 and C3 block DC. L1 and L2 block AC for the supply voltage.}\label{fig:TransAmp}
+\end{figure}
+
+A test of the amplifier in \autoref{appendix:TransmitterInt} shows the amplifier is amplifying \SI{16,18}{\deci\belm} and meets the required \SI{11.02}{\deci\belm}. The loss of the amplification could be due to one of the amplifier being biased incorrectly and reflection within the rest of the circuit. Since the gain is higher then the required the amplification circuit is used. The power received at the receiver is \SI{-62,14}{\deci\belm}.

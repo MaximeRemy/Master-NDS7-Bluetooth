@@ -1,0 +1,161 @@
+\subsection{Design of low-pass filter}\label{sec:designLPFilter}
+As seen in \autoref{subsec:downconversion} a filter to remove a unwanted high frequency component from the signal is needed. The filter should have the following characteristics to remove the unwanted frequency components. 
+\begin{itemize}
+\item Analogue filter since the filter has to filter out frequencies above \SI{1}{\mega\hertz}
+\item Low-pass filter 
+\item Maximum passband flatness to reduce altering the signal as much as possible.
+\item Cut-off frequency at \SI{0.5}{\mega\hertz} (3 dB attenuation point) as described in \autoref{sec:mixercircuitdesign}.
+\item An attenuation of 60 dB at \SI{10}{\mega\hertz} since it is desired to filter out any harmonics.
+\item Load resistance of \SI{50}{\ohm}
+\end{itemize}
+With this cut-off characteristic the \SI{333}{\kilo\hertz} information carrying signal, pass through the filter unaltered, while the unwanted  \SI{2}{\giga\hertz} signal is filtered away. A load resistance of \SI{50}{\ohm} is to ensure good signal integrity and power transfer.
+
+A filter with a flat passband is wanted therefore the Butterworth filter type is chosen. To find the necessary order for such a Butterworth filter \autoref{eq:OrderNecessary} is used \citep{AnagogFilters}. 
+\begin{equation} \label{eq:OrderNecessary} 
+n = \frac{1}{2\cdot \log_{10}\left( \frac{\omega_{s}}{\omega_{p}} \right)} \cdot \log_{10}\left( \frac{10^{ \left( \frac{\alpha_{s}}{10} \right) }-1}{10^{\left( \frac{\alpha_{p}}{10} \right)}-1}  \right) \addunit{1}
+\end{equation}
+\startexplain
+\explain{n is the necessary order}{\si{1}}
+\explain{$\omega_{s}$ is the stopband angel}{\si{\radian\per\second}}
+\explain{$\omega_{p}$ is passband angel (Cut-off frequency) }{\si{\radian\per\second}}
+\explain{$\alpha_{s}$ is the stopband attenuation}{\si{1}}
+\explain{$\alpha_{p}$ is the  passband attenuation}{\si{1}}
+\stopexplain
+
+The wanted design characteristics are inserted in \autoref{eq:OrderNecessary} and the needed order of the filter is found by rounding up the value. 
+\begin{equation} \label{eq:FindOrderNecessary} 
+n = \frac{1}{2\cdot \log_{10}\left( \frac{10 \cdot 10^{6} \cdot 2\pi}{0.5 \cdot 10^{6} \cdot 2\pi} \right)} \cdot \log_{10}\left( \frac{10^{ \left( \frac{60}{10} \right) }-1}{10^{\left( \frac{3}{10} \right)}-1}  \right) = 2.307 \to 3
+\end{equation}
+
+Due to the high frequency a passive “ladder” filter realisation is chosen. A circuit diagram of the filter is seen on \autoref{fig:LPFilter_realization}. 
+\begin{figure}[h]
+    \centering
+        \includegraphics[width=0.6\textwidth]{figures/circuits/ladder_realization_circuit}
+        \caption{Circuit diagram showing a passive third-order “ladder” filter realisation.}
+        \label{fig:LPFilter_realization}
+\end{figure}
+
+\subsubsection{Finding the transfer function for the circuit}
+Looking at \autoref{fig:LPFilter_realization} two \gls{kcl} equations are made, \autoref{eq:LPFilterKCL1} and \autoref{eq:LPFilterKCL2}. 
+\begin{equation} \label{eq:LPFilterKCL1} 
+\frac{V_{C2} - V_{in}}{sL_{1}} + \frac{V_{C_{2}} - 0}{\frac{1}{sC_{2}}} + \frac{V_{C_{2}} - V_{out}}{sL_{3}} = 0
+\end{equation}
+\begin{equation} \label{eq:LPFilterKCL2} 
+\frac{V_{out} - 0}{R_{L}} + \frac{V_{out} - V_{C_{2}}}{sL_{3}} = 0
+\end{equation}
+
+From \autoref{eq:LPFilterKCL1} and \autoref{eq:LPFilterKCL2} a transfer function for the circuit can be deduced, note that $R_{L}$ is normalized to 1.
+\begin{equation} \label{eq:LPFilterTfansfer1}  
+\frac{V_{out}}{V_{in}} = H(s) = \frac{1}{(L_1 \cdot C_2 \cdot L_3) \cdot s^{3}+(L_1 \cdot C_2) \cdot s^{2}+(L_1+L_3) \cdot s + 1}
+\end{equation}
+
+\subsubsection{General third-order butterworth transfer function}
+The poles of a butterworth filter can be found with \autoref{eq:LPFilterPoles} \citep{AnagogFilters}. 
+\begin{equation} 
+p_{k} = e^{j \cdot \left( \frac{2k -1}{2n} \cdot \pi +\frac{\pi}{2} \right) } \label{eq:LPFilterPoles} 
+\end{equation}
+\startexplain
+\explain{$p_{k}$ is a pole}{1}
+\explain{$k$ is the pole index $ | k \in \mathbb{N} [ 1 : n]$}{1}
+\explain{$n$ is the filter order}{1}
+\stopexplain
+
+Since it is a third-order filter, there is three poles, using \autoref{eq:LPFilterPoles} these three poles are calculated. 
+%\begin{equation} \label{eq:LPFilterPole1} 
+%p_{1} = e^{j \cdot \left( \frac{2 \cdot 1 -1}{2 \cdot 3} \cdot \pi +\frac{\pi}{2} \right) } = e^{j \cdot \frac{2}{3}\pi}
+%\end{equation}
+%\begin{equation} \label{eq:LPFilterPole2} 
+%p_{2} = e^{j \cdot \left( \frac{2 \cdot 2 -1}{2 \cdot 3} \cdot \pi +\frac{\pi}{2} \right) } = -1 
+%\end{equation}
+%\begin{equation} \label{eq:LPFilterPole3} 
+%p_{3} = e^{j \cdot \left( \frac{2 \cdot 3 -1}{2 \cdot 3} \cdot \pi +\frac{\pi}{2} \right) } = e^{j \cdot \frac{4}{3}\pi}
+%\end{equation}
+\begin{align} \label{eq:LPFilterPolesFound}
+ p_{k} &=
+  \begin{cases}
+   e^{j \cdot \frac{2}{3}\pi}   & \text{for k = 1} \\
+   -1							& \text{for k = 2} \\
+   e^{j \cdot \frac{4}{3}\pi}   & \text{for k = 3}
+  \end{cases}
+\end{align}
+
+The transfer function can be made from the three poles found in \autoref{eq:LPFilterPolesFound}.
+\begin{subequations}
+\begin{align}  
+H(s) &= \frac{1}{(s-p_{1})(s-p_{2})(s-p_{3})} \label{eq:TFfromPoles1} \\
+ &= \frac{1}{s^{3} + 2s^{2}+2s+1} \label{eq:TFfromPoles5} 
+\end{align}
+\end{subequations}
+
+\subsubsection{Comparing the two transfer functions to find the normalized values}
+Now two different transfer functions for the filter are made. 
+By comparing \autoref{eq:LPFilterTfansfer1} and \autoref{eq:TFfromPoles5}, three equations with three unknown variables are made.
+\begin{subequations}
+\begin{align}
+L_1 \cdot C_2 \cdot L_3 &= 1  \label{eq:LPFilter3equations1} \\
+L_1 \cdot C_2 &= 2 \label{eq:LPFilter3equations2} \\
+L_1 + L_3 &= 2 \label{eq:LPFilter3equations3}
+\end{align}
+\end{subequations} 
+
+Solving \autoref{eq:LPFilter3equations1}, \autoref{eq:LPFilter3equations2} and \autoref{eq:LPFilter3equations3} for the values of $L_{1}$, $C_{2}$ and $L_{3}$, yields the normalized component values which is seen in \autoref{tab:NormalizedLPFilertValues}. 
+\begin{table}[h]
+	\centering
+	\caption{Normalized component values for a third-order butterworth "ladder" type filter, as the one shown on \autoref{fig:LPFilter_realization}.}\label{tab:NormalizedLPFilertValues}
+	\begin{tabular}{l l }
+		\textbf{Component}	& \textbf{Value}	\\ \toprule \rowcolor{lightGrey}
+		$L_{1n}$	& \SI{1.5}{\henry}		\\ 
+		$C_{2n}$	& $\frac{4}{3}$~\si{\farad} 	\\ \rowcolor{lightGrey}
+		$L_{3n}$	& \SI{0.5}{\henry} 		\\ 
+		$R_{Ln}$	& \SI{1}{\ohm}			\\
+	\end{tabular}
+\end{table}
+
+\subsubsection{Scaling the normalized values}
+The normalized values need to be both frequency and impedance scaled. The frequency scaling factor is given by \autoref{eq:LPFilterFreqScalingFactor} and the impedance scaling factor is given by \autoref{eq:LPFilterImpScalingFactor} \citep{AnagogFilters}. 
+\begin{equation} \label{eq:LPFilterFreqScalingFactor}
+k_{f} = \frac{\omega_{p}}{\omega_{pn}} = \frac{2\pi \cdot 500 \cdot 10^{3}}{1}= 1 \cdot 10^{6} \cdot \pi
+\end{equation}
+\begin{equation} \label{eq:LPFilterImpScalingFactor} 
+k_{z} = \frac{R_{L}}{R_{n}} = \frac{50}{1} = 50 
+\end{equation}
+
+The actual component values for the filter can be found with two scaling equations. To find the inductor values \autoref{eq:LPFilterCApasitorScaling} is used. 
+ \begin{equation} \label{eq:LPFilterCApasitorScaling}
+L_{is} = \frac{k_{z}}{k_{f}} \cdot L_{in} \addunit{\henry}
+\end{equation}
+\startexplain
+\explain{$i$ is the index number}{\si{1}}
+\explain{$L_{is}$ is a scaled inductor}{\si{\henry}}
+\explain{$L_{in}$ is a normalized inductor}{\si{\henry}}
+\stopexplain
+To find the capacitor values \autoref{eq:LPFilter:inductorScaling} is used.
+\begin{equation} \label{eq:LPFilter:inductorScaling} 
+C_{is} = \frac{1}{k_{f} \cdot k_{z}} \cdot C_{in} \addunit{\farad}
+\end{equation}
+\startexplain
+\explain{$C_{is}$ is a scaled capacitor}{\si{\farad}}
+\explain{$C_{in}$ is a normalized capacitor}{\si{\farad}}
+\stopexplain
+
+All the needed equations and values have now been found and the actual component values for the filter can be found, by inserting the found normalized component values from \autoref{tab:NormalizedLPFilertValues} together with the scaling factors found in \autoref{eq:LPFilterFreqScalingFactor} and \autoref{eq:LPFilterImpScalingFactor}, into \autoref{eq:LPFilterCApasitorScaling} and \autoref{eq:LPFilter:inductorScaling}. Due to component tolerances the calculated component values, are not easily available for this project, therefore the closest value available is used. 
+\begin{subequations}
+\begin{align} 
+L_{1s} &= \frac{50}{1 \cdot 10^{6} \cdot \pi} \cdot 1.5  = \SI{23.9}{\micro\henry} \xrightarrow{E6} \SI{22}{\micro\henry} \label{eq:LPFilter:inductorScalingDone2} \\
+C_{2s} &= \frac{1}{1 \cdot 10^{6} \cdot \pi \cdot 50} \cdot \frac{4}{3} = \SI{8.5}{\nano\farad} \xrightarrow{E6} \SI{8.2}{\nano\farad}  \label{eq:LPFilter:inductorScalingDone1} \\
+L_{3s} &= \frac{50}{1 \cdot 10^{6} \cdot \pi} \cdot 0.5  = \SI{8.0}{\micro\henry} \xrightarrow{E6} \SI{8.2}{\micro\henry} \label{eq:LPFilter:inductorScalingDone3} 
+\end{align}
+\end{subequations} 
+
+\subsubsection{Simulation}
+With the circuit designed and all the component values found, the final circuit is simulated in LT-Spice. The result of the simulation is seen on \autoref{fig:LPFilterSImPlot}. 
+\begin{figure}[h!]
+    \centering
+        \includegraphics[width=\textwidth]{figures/design/LPFilter/LPFilterSimPlot}
+        \caption{LT-Spice simulation of the circuit on \autoref{fig:LPFilter_realization} with calculated values. The gray boxes represents the limits introduced by the requirements}
+        \label{fig:LPFilterSImPlot}
+\end{figure}
+
+It is seen from the simulation on \autoref{fig:LPFilterSImPlot} that the passband is flat. It is seen that the attenuation at \SI{5.15}{\mega\hertz} is 60 dB. Furthermore it is seen that the cut-off frequency is located at \SI{543}{\kilo\hertz}. 
+
+The cut-off frequency is of the realised filter is offset by \SI{43}{\kilo\hertz} compared to the design parameter, but the filter has a sharper cut-off curve. It is seen on \autoref{fig:LPFilterSImPlot} that the filter meets the requirements even after a frequency shift. The filter design is accepted. 

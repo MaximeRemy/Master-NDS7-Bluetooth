@@ -1,0 +1,117 @@
+\chapter{Implementation} \label{ch:implementation}
+After the design of each component is complete, all the modules have to be implemented and integrated. As described in \autoref{pt:design}, the main processing unit is a \gls{psoc} 5LP on a CY8CKIT-059 Development Board. The overall system architecture is decided and a mounting solution is found.
+
+The architecture of the integrated system is reviewed and some issues with the design are discussed.
+
+\section{System architecture}
+\autoref{req:mounting} requires the entire system to be mounted on the back of the antenna stand. The \gls{psoc} and two motor drivers are gathered on a veroboard and a \gls{pcb} is made for the mixers and associated circuitry. The antennas are mounted in an L-shape with a bracket and plastic bolts. A holder for the laser is 3D-printed and mounted at the middle point between the antennas.
+The full integration is seen on \autoref{fig:standMounting}.
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.475\linewidth]{figures/design/Implementation/StandAntennaUp.jpg}
+	\includegraphics[width=0.475\linewidth]{figures/design/Implementation/StandAntennaDown.jpg}
+	\caption{The stand mounted}\label{fig:standMounting}
+\end{figure}
+
+Connectors are an important concern when doing high-frequency electronics. To ensure a good connection between the antennas and the mixer board coaxial cables with SMA connectors are used.  BNC cables are used from the mixer to the veroboard carrying the \gls{psoc} to ensure good connections even when the stand is moving.
+
+The mixer board is mounted on top of the \gls{psoc}'s board in order not to block the antennas when the stand is pointing up. The cables connecting the antennas to the mixer board have two main requirements: they have to be equal length, and they have to be as short as possible to not restrain the movement of the antennas. 
+The cables have to be equal length to limit the phase offset. Because of imprecisions in the production process the lengths are not exactly equal and a calibration has to be done, but any offset will make the field of view equivalently smaller. The offset of a \SI{1}{\milli\meter} cable length difference is given from \autoref{eq:cable_offset_effect}.
+\begin{equation} \label{eq:cable_offset_effect}
+	\frac{\SI{1}{\milli\meter}}{\frac{c}{\SI{869}{\mega\hertz}}} \cdot 2\pi \approx \SI{18,21}{\milli\radian}
+\end{equation}
+It is quite clear that without calibration even a single millimeter of length difference would render the project inaccurate. To minimize the reduction in \gls{aoa} the cables connecting the antennas to the mixer board are chosen to be of equal length.
+
+A simplified schematic without decoupling is shown on \autoref{fig:psocBoardDiagram}. The connections are also shown on \autoref{tab:programming:IODiagram}.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{figures/design/Implementation/PSoCDiagram.pdf}
+	\caption{Diagram of the organization of the \gls{psoc} board}
+	\label{fig:psocBoardDiagram}
+\end{figure}
+
+
+\begin{table}
+	\centering
+	\caption{I/O diagram of the \gls{psoc}'s pins.}
+	
+	\begin{tabularx}{\textwidth}{l l X}
+		\textbf{\gls{psoc} pin} & \textbf{Name} & \textbf{Description}	\\ \toprule \rowcolor{lightGrey} 
+		P3[7]&	DCMotor_Enable		& Enables the driver for the DC motor.\\ 
+		P15[4]&	DCMotorLeft			& \gls{pwm} signal that moves the DC motor left.\\ \rowcolor{lightGrey} 
+		P15[5]&	DCMotorRight		& \gls{pwm} signal that moves the DC motor right.\\ \hline 
+		P0[0]&	Pin_ADC_In_Pos		& Analog pin to the \gls{adc} which is connected to the common signal.\\ \rowcolor{lightGrey} 
+		P0[5]&	Pin_ADC_In_1_Pos	& Analog pin the the \gls{adc} which is connected to the elevation signal. \\
+		P0[6]&	Pin_ADC_In_2_Pos	& Analog pin the the \gls{adc} which is connected to the azimuth signal. \\ \rowcolor{lightGrey}  \hline 
+		P2[0]&	Stepper_Enable		& Enables the stepper motor driver. \\ 
+		P1[7]&	Stepper_Direction	& Sets the direction for the stepper motor driver. \\ \rowcolor{lightGrey} 
+		P1[6]&	STEP_PIN			& The \gls{pwm} signal to the stepper motor driver.\\ 
+		P2[3]& 	MS1_PIN				& Logic output which controls the type of step for the stepper motor. \\
+	\end{tabularx}
+\end{table}\label{tab:programming:IODiagram}
+
+In addition to the main veroboard two other circuits are constructed during the implementation.
+
+\subsection{Mixer PCB} \label{sec:mixer_pcb}
+Three antennas are used, and three mixers are needed. All three mixer circuits are placed on a single \gls{pcb} with the associated low-pass filter and a single shared \gls{lo}. An amplifier to increase the power of the \gls{lo} is used as splitting the line into three reduce the received power by each mixer.
+Great care is taken to ensure the correct lengths and impedances of the high-frequency traces. The \gls{lo} lines have been matched in length to ensure that the mixers will not have phase difference based on a phase shifted \gls{lo} signal. The \gls{rf} lines coming from the antennas are made as short as possible and their lengths are matched. Two of the mixers have equivalent lengths of \gls{rf} lines, while the last one has additional length to ensure a $\frac{\pi}{2}~\si{\radian}$ phase shift. The required length is very dependent on the material constants. It is therefore chosen to use a software utility called TXLine to calculate the required length, giving the result \SI{46.733}{\milli\meter}.
+
+To prevent power loss between the \gls{vco} and each mixer, and from the \gls{rf} inputs to the mixers, \SI{50}{\ohm} impedance lines are used. The width required to have a characteristic impedance of \SI{50}{\ohm} is calculated during antenna design given in \autoref{tab:antennaDesign:antennaDimensions} as \SI{2.841}{\milli\meter}. In addition \SI{50}{\ohm} matched coaxial cables are used from the antennas to the mixer board.
+
+The board is designed with an extra connector next to the \gls{vco}. This is added to enable testing of the \gls{lo} power on the actual circuitry and enable use of another signal generator if required. A jumper is added to skip the low-pass filter if necessary.
+
+Common high frequency layout practices are followed with short ground return paths, ground plane cut-out below impedance sensitive circuitry and an unbroken ground plane below \SI{50}{\ohm} matched lines.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/design/Implementation/mixer_board.jpg}
+	\label{fig:mixer_board}
+	\caption{The mixer board. The three mixer circuits are marked in green and the \gls{vco} circuitry is marked in blue. The input is the three SMA connectors and the output is taken from either the BNC connectors or the headers next to. The low-pass filter can be skipped by changing the jumper placed above.}
+\end{figure}
+
+\subsection{Power regulation}
+It is wanted to power the system from a mains-supplied power supply so battery is not a concern during development and testing. The stands rotation makes wires going from a power supply directly to the integrated solution impractical, however the stand has a single coaxial cable attached to the center of rotation. This wire is used to transfer the power to the electronics on the stand.
+Two supplies are needed, a \SI{10}{\volt} and a \SI{5}{\volt}. The \SI{10}{\volt} is transfered directly from the center-cable connected to the power supply and a LM7805 linear regulator is used to supply the \SI{5}{\volt} rail. Both the \SI{10}{\volt} and the \SI{5}{\volt} supplies are decoupled, as shown on \autoref{fig:diagramPowerBoard}. 
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.6\textwidth]{figures/design/Implementation/PowerBoardDiagram.pdf}
+	\caption{Diagram of the power board, the, arrows mark the outputs of the board}\label{fig:diagramPowerBoard}
+\end{figure}
+
+\section{Implementation issues}
+During the design phase several assumptions on the other parts of the project were made in each section. A few of these assumptions were wrong the design had to be changed.
+
+\subsection{DC motor controller}
+The DC motor controller was designed under the assumption that the cycle time would be $T_{cyc} = \SI{5}{\milli\second}$, meaning the controller would update the output every \SI{5}{\milli\second} with a feedback value that was valid \SI{5}{\milli\second} ago. The actual cycle time is however tested to be \SI{160}{\milli\second}. To simulate the response of the system with the actual cycle time, the model from \autoref{appendix:nonlinearAntennaStandModel} is used. Since the cycle time is so high, a transport delay is inserted in the feedback path, to simulate the delayed response. The simulated step response is given on \autoref{fig:implementation:stepResponse}.
+\begin{figure} [h]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/design/Implementation/stepResponse160msCycleTime}
+\caption{Simulated step response of the antenna stand for azimuth rotation. The simulation is run with three different controllers, all with a \SI{160}{\milli\second} cycle time and feedback delay}\label{fig:implementation:stepResponse}
+\end{figure}
+
+It is seen from the simulations that increased cycle time causes the system to utilize a compensated \gls{pd} controller to oscillate. A \gls{pid} and \gls{pd} controller have also been simulated and found oscillating. The stability of the system might be improved significantly by decreasing the gain, and thereby the speed at which the stand rotates. Reducing the gain might however, as previously stated, cause the rotation to stop prematurely, causing a steady state error.
+
+
+\subsection{Oscillator}
+One assumption which limited project severely during the testing was the underestimation of the temperature drift of the VCO. It was found that a small gust of wind on the oscillator caused a frequency drift of hundreds of kilohertz. Testing indoors was very hindered by having to adjust the frequencies every minute and testing on a flying drone is practically impossible.
+No solution to this problem is found within the development time. Testing is done using a accurate and temperature compensated signal generators.
+
+\section{System operation}
+An overview of the final implementation and integration is seen on \autoref{fig:progDiagram}. The system operation is split into three overall categories: signal acquisition and treatment, signal processing and  mechanical movement.
+
+\begin{figure} [h]
+	\centering
+	\includegraphics[height = 0.55\textheight]{figures/design/Implementation/StandCycleDiagram.pdf}
+	\caption{Overview of the receiver end of the product. Information flows from the top and downwards.}
+	\label{fig:progDiagram}
+\end{figure}
+
+The transmitter continually sends a signal at \SI{869}{\mega\hertz}. This signal is received by the three antennas of the stand and redirected to the mixer board. The mixer board treat the analog signal. 
+Once the signals are treated, they are sampled by the \gls{adc} according to \autoref{sec:adc}. When a suitable amount of data is acquired, the signals are processed to find the phase difference. Elevation and azimuth angles are calculated from the phase differences.
+These two angles are sent to the controllers of the stepper motor and the DC motor respectively. The DC motor and stepper motor rotate to point at the transmitter. The process of this starts over.
+
+Before each use of the setup, calibration is recommended. Calibration is done by aiming the laser attached to the stand at the transmitter. A define is changed in the software to disable the motors and output the uncalibrated values of calculated phase over UART connection to a computer. A script is run to calculate the average of 100 measurements for each channel, then the calibration values are manually moved into a header file. The program is recompiled with the new calibration values, after the define is changed back. The calibration is done every time the system is tested.
+
+\section{Conclusion}
+During \autoref{pt:design} a system to calculate the \gls{aoa} of a continuous wave is designed. The system is designed in several parts and implemented on hardware during this chapter. The system is tested to compare with the requirements and a conclusion on the project is given.

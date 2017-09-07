@@ -1,0 +1,45 @@
+\graphicspath{{figures/design/tracking/}}
+\chapter{Tracking}\label{ch:design:Tracking}
+
+In \autoref{sec:TrackingTheDrone} it is chosen to use the phase-difference method to track the done. 
+The drone transmits a continous-wave signal for the station to receive at \gls{rf}. Two oscillator circuitries are designed for this purpose as seen on \autoref{fig:tracking_overview} where an overview of the transmitter and the receiver is seen. At least three receiver antennas are needed for calculation of the angle in azimuth and elevation planes. It is chosen to frequency downconvert the signal received by the antennas before sampling on a \gls{psoc}. Three mixers therefore needed. Documentation states that the \gls{psoc} can sample at \SI{1}{MSPS} \cite{datasheet:saradc} and the system is therefore designed under this assumption. The chosen tracking has a field of view of \SI{180}{\degree}, and the tracking system doesn't work proper beyond this range. The tracking module do not include a solution for the initial locating if the target is outside of the field of view.
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+		\includegraphics[width=\textwidth]{tracking_tx_overview}
+		\caption{Overview of the transmitter circuit.}
+		\label{fig:tracking_transmitter_overview}
+	\end{subfigure}
+	~ 
+	\begin{subfigure}[b]{0.35\textwidth}
+		\includegraphics[width=\textwidth]{tracking_rx_overview}
+		\caption{Overview of the receiver circuit.}
+		\label{fig:tracking_receiver_overview}
+	\end{subfigure}
+
+	\caption{Overview of the tracking system for one angle. The full system include another receiver, mixer and filter. The signals at $S_a$ and $S_b$ is sampled by a \gls{psoc} and used to calculate the phase-differences between the signals}
+	\label{fig:tracking_overview}
+\end{figure}
+
+%\todo[author=Mads J]{State that we delimit from a field of view larger than 180 degrees. (No locating).}
+
+
+\input{chapters/design/ChoosingFrequency}
+
+\input{chapters/design/Oscillator.tex}
+
+\input{chapters/design/antennaDesign.tex}
+
+\input{chapters/design/transmitter_power.tex}
+%
+\input{chapters/design/mixer}
+%
+\input{chapters/design/adc.tex}
+%
+\input{chapters/design/calculationOfPhase.tex}
+%
+
+
+\section{Conclusion}
+The section implements the \gls{aoa} determination using the phase difference of a beacon signal. The frequency has been chosen to \SI{864}{\mega\hertz} and an oscillator for the frequency is designed, which is free running and proves to be very temperature dependent. Three patch antennas for receiving the beacon signal are designed which prove to have a higher efficiency at \SI{869}{\mega\hertz} so the frequency is changed. The transmitter consists of an \SI{869}{\mega\hertz} oscillator, an amplifier and an omnidirectional whip antenna. The amplification is determined from the link budget so the transmission power becomes \SI{3.02}{\deci\belm}. The three received signals are downconverted to a lower frequency below \SI{500}{\kilo\hertz} using a mixer and a local oscillator, and then sampled by an \gls{adc} on a \gls{psoc} which calculates the \gls{aoa} from the phase differences of the received signals with an average error of \SI{1.4}{\milli\radian}.

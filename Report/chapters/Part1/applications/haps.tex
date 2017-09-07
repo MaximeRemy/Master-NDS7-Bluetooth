@@ -1,0 +1,25 @@
+\newpage 
+\subsection{\glsentryshort{haps}}
+A \gls{haps} is a hovering station which operate at a fixed location at an altitude of 20 - 50 km \citep{manual:radio_regulation}.
+
+The first \gls{haps}' were developed for military use for two specific tasks, the first one being field surveillance and the second one acting as a relay for wireless communication. 
+Two publicly known \gls{haps} projects from USA are the Lockheed Martin High Altitude Airship and the project HiSentinel. The ambition of the military is to get services akin to a satellite for a lower operational cost \citep{article:Different_models_HAPS}.
+
+However, \gls{haps} platforms could also fill some roles for the commercial space agencies in the near future. The constantly increasing need for high-speed wireless communications and communication in remote areas make \gls{haps} a good area of study. 
+Thanks to its privileged position at an altitude of 17 to \SI{22}{km} it will be able to ignore any geographical restriction imposed by the region, centralize the network and allow better repartition of the resources.
+Furthermore the cost of a \gls{haps} could potentially be less than a similar ground station, as a suitable site does not need to be acquired first and a need of relays to spread the network everywhere in the region may be avoided depending on the range of the \gls{haps} \citep{sci_article:haps_for_wireless_comm}.
+
+One of the largest problems with current \gls{haps} technology is power. \gls{haps} as network stations have three main sources of power consumption; engines, payload and maintenance. The Lindstrand balloon requires \SI{90}{\kilo\watt} for propeller and an additional \SI{15}{\kilo\watt} is needed to power a communication station payload \citep{TechReport:HAPS_power}. During the day the solar energy is enough to entirely power the HAPS \citep{sci_article:haps_solar_power}.
+However at night solar power is not available forcing the HAPS to get power elsewhere. Current \gls{haps} projects use batteries for overnight power because the distance between the \gls{haps} and the ground is too large for any wired powering.
+This presents a problem. The batteries for powering a \gls{haps} for a full night are large and heavy. Using data from \cite{TechReport:HAPS_power} a quick estimate of the battery size can be made.
+
+By considering an average night to be 12 hours, then a \gls{haps} has to be able to store at least $\SI{105}{\kilo\watt} \cdot \SI{12}{\hour} = \SI{1260}{\kilo\watt\hour}$ in its batteries. A typical battery has an energy density of around \SI{300}{\watt\hour\per\kilogram} \citep{report:IEA_batteries}.
+
+The needed mass of batteries needed to keep the \gls{haps} operational doing the night is calculated in equation \ref{eq:HAPS_battery_weight}. 
+\begin{equation} \label{eq:HAPS_battery_weight}
+	\frac{\SI{1260}{\kilo\watt\hour}}{\SI{300}{\watt\hour\per\kilogram}} = \SI{4200}{\kilogram}
+\end{equation}
+
+By removing the batteries alone, without considering housing or power conversion circuitry, \autoref{eq:HAPS_battery_weight} show a \gls{haps} could save \SI{4200}{\kilogram} of mass.
+
+This saving makes \gls{haps} an obvious target for wireless power transfer.

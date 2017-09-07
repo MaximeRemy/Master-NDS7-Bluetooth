@@ -1,0 +1,29 @@
+\section{Analysis of the drone} \label{sec:droneSpec}
+For this project a 3DR Solo drone is made available. In order to make system requirements it is needed to know some parameters and specifications of the 3DR Sole drone. 
+
+Table \ref{tab:DroneSpecs} shows the specifications of the 3DR Sole drone. 
+\begin{table}[h]
+	\centering
+	\caption{The parameters and specifications of the 3DR Solo drone.} \label{tab:DroneSpecs}
+
+	\begin{tabularx}{\textwidth}{lX}
+		Specification 		&  								\\ \toprule \rowcolor{lightGrey}
+		Maximum Speed		&  \SI{55}{\mph} (\SI{89}{\kilo\meter\per\hour} $\approx$ \SI{24.722}{\m\per\second})								\\
+		Fly time 			& \SI{20}{\minute}; \SI{15}{\minute} with payload (may vary)	\\ \rowcolor{lightGrey}
+		Range 		 		& \SI{0.6}{\miles} (\SI{1}{\kilo\meter})									\\
+		Max payload			& \SI{0.8}{\kilogram} 											\\ \rowcolor{lightGrey}
+		Max altitude		& \SI{400}{\feet} per FAA regulation, user adjustable (\SI{122}{\meter})\\
+		Motors				& \SI{880}{\kilo\volt} 											\\ \rowcolor{lightGrey}
+		Communication		& 3DR Link secure WiFi network 						\\
+		Frequency			& \SI{2.4}{\giga\hertz} 											\\ \rowcolor{lightGrey}
+		Dimensions			& \SI{10}{\inch} tall (\SI{25}{\centi\meter}), \SI{18}{\inch} (\SI{46}{\centi\meter}) motor-to-motor\\
+		Flight battery		& Lithium polymer \SI{5200}{\milli\ampere\hour}, \SI{14.8}{\volt} in DC 				\\ \rowcolor{lightGrey}
+		Battery charge time	& \SI{1.5}{\hour} (may vary)								\\
+		Max ascent speed	& \SI{10}{\meter\per\second} in Stabilized mode; \SI{5}{\meter\per\second} in FLY mode		\\ 
+	\end{tabularx}
+	\caption*{\citep{Web:DroneSpec}}
+\end{table}
+
+\input{chapters/Part1/tracking/RequiredPrecision}
+
+\input{chapters/Part1/NeedForSpeed.tex}

@@ -1,0 +1,53 @@
+\chapter{Delimitations and problem statement}\label{ch:ProblemStatement}
+The different applications of long distance \gls{wpt} imposes different requirements for distance, precision and speed. The scope of this project only contains a single system, and one is therefore chosen.
+
+\section{Delimitations}
+
+
+A system for tracking and pointing at a drone is chosen since a 3DR Solo drone is available for the project.
+
+As seen in \autoref{sec:WPTmethods} you can not have efficient long distance \gls{wpt} without precise tracking and pointing. Because of the limited scope of the project it is decided to focus on tracking and pointing. For that reason the project is delimited from \gls{wpt}. A commercial laser pointer is used instead of a proper \gls{wpt} system as a proof of concept and to measure if the tracking is working during later testing.
+
+The project has been provided with the following hardware:
+\begin{itemize}
+\item A 3DR Solo drone
+\item A motorised antenna stand with a DC- and a stepper motor
+\item A laser pointer
+\end{itemize}
+
+Since these items are available, the project focus is making a system that works for these. The resulting solution may therefore not function properly with other drones or motorised antenna stands. 
+
+\newpage
+In summary the project is delimited from working with:
+\begin{itemize}
+\item \gls{wpt}
+\item Storing and using the energy received by the drone
+\item Compatibility with other drones than the 3DR Solo drone
+\item Design and creation of a motorised antenna stand
+\item Complying with applicable laws and regulations specifically directed at commercial products
+\end{itemize}
+
+The 3DR Solo drone and the motorised antenna stand are analysed in \autoref{ch:TechnicalKnowlegde}.
+ 
+\section{Problem statement} \label{sec:problem_statement}
+To set the direction for the rest of the project a problem statement is made.
+
+\bigskip
+\noindent\textbf{How can a proof of concept tracking platform be designed and constructed, such that it demonstrates locating and tracking capabilities by continuously aiming at a flying drone?}
+\bigskip
+
+From the problem statement it should be clear that the objectives for this project is to design a ground based tracking station. The station should be able to locate and then continuously track a flying drone. The station should use the tracking information to continuously aim a mechanism at the drone. 
+
+\noindent The objectives for this project are as follows:
+\begin{itemize}
+	\item Design a system to detect and track the position of the drone.
+	\item Create a model and controller for the motorised antenna stand. 
+	\item Aim the motorised antenna stand at the drone.   
+	\item Design a system to measure whether the ground station is aiming at the drone.
+%	\item Integrate the systems to show how wireless power transfer to a drone could be done.
+	\item Test the integrated system against a requirements specifications to determine the success of the project.
+\end{itemize}
+%\todo[author=Alexander,inline]{Do we have more objectives? Do the objectives cover the report? Reconsider this when we're a bit further.}
+
+Before a solution is presented through a requirements specification, \autoref{ch:TechnicalKnowlegde} is a technical analysis of the items made available for the project and different tracking techniques.
+

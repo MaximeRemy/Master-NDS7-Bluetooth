@@ -1,0 +1,31 @@
+\subsection{Conclusion on tracking metods}\label{sec:pre:trackingConclusion}
+With all the different methods of tracking the drone investigated a conclusion is to be made. An overview of the conclusion of the different methods are seen in \autoref{tab:TrackingConclusion}.
+
+Optical tracking is discarded as it is too dependent on environmental conditions to be effective.
+
+Using radar technology to track different objects is already a widely used technique however it requires antennas with a high gain or high transmission power levels. The radar method is assessed to be too complex for this project.  
+
+Despite of the inherent simplicity of the signal strength method it does not have the precision required.
+
+Using the on-board \gls{gps} module on the drone to track it is a possible solution had the \gls{gps} been more precise. The \gls{gps} method might however be useful to generate rough estimate of the drones position if it is found needed. 
+
+The time of arrival method shows great tracking potential, but to reach the wanted precision it becomes infeasible due to the need of high speed sampling.
+
+The phase difference method shows many of the same characteristics as the time of arrival method, but without the need for high speed sampling.
+
+\begin{table}[h!]
+\centering
+\caption{Summary of the different methods of tracking the drones direction.}
+\begin{tabularx}{\textwidth}{l X }
+	\textit{Method} 	& \textit{Summery} 	\\ \toprule \rowcolor{lightGrey}
+	Optical tracking	& Too weather dependent 					\\
+	Time of arrival		& Requires a high sampling frequency and sensitive electronics \\ \rowcolor{lightGrey}
+	Phase difference 	& Good solution	\\ 
+	Signal strength 	& Very noise prone and not precise enough \\\rowcolor{lightGrey}
+	GPS					& Easy implemented, not very precise \\ 
+	Radar & Complex, require high antenna gain\\
+\end{tabularx}
+\end{table} \label{tab:TrackingConclusion}
+
+It is chosen to utilize the phase difference method to track the drone. The motorised antenna stand is now analyzed.
+

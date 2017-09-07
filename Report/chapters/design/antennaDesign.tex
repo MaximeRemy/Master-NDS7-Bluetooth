@@ -1,0 +1,210 @@
+\section{Antenna design}\label{sec:antenna_design}
+The tracking system incorporates two types of antennas. A transmitting antenna on the drone and three receiving antennas on the stand. These four antennas are designed and constructed in this section. 
+
+The transmitting antenna is statically mounted on the drone and follows the movement of the drone, therefore an omni-directional antenna is preferred.
+
+The three receiving antennas would preferably have a high directionality. Highly directional antennas give a higher gain the more precisely the station is pointed at the drone. As seen in \autoref{sec:detSignalDistanceDifference} high gain and \gls{snr} lead to decreased pointing error. The station's precision would therefore increase when it is needed the most. 
+
+
+\subsection{Receiving antennas}
+Three receiver antennas have to be designed and constructed at \SI{864}{\mega\hertz} with $S{11}$ parameters arbitrarily chosen of at least \SI{-10}{\deci\bel}, where the loss in the reflected power is less than 10\%. The expected maximum gain of the antennas is $\geq \SI{3}{\deci\beli}$. Since the overall design requires a directional antenna, a patch antenna is chosen. Patch antennas have inherently high directionality. The patch antennas can be very rigid, depending on the choice of substrate, and have a well documented design topology \citep{AntennaTheoryBook}. Since all the materials needed for creating a patch antenna are available, this type is chosen. An illustration of a patch antenna shape is seen on \autoref{fig:GeneralPatchAntenna}. 
+\begin{figure}[h]
+    \centering
+        \includegraphics[width=0.5\textwidth]{figures/design/ReceiverAntenna/GeneralPatchAntenna}
+        \caption{An illustration of the shape of a patch antenna.}
+        \label{fig:GeneralPatchAntenna}
+\end{figure}
+
+To calculate the dimensions of the patch antenna a series of equations from \cite{AntennaTheoryBook} is used. The equations is listed below. The equations are used to calculate the dimensions after some initial values are chosen, such as desired input impedance. The dimensions are calculated through MATLAB using the script in \autoref{Code:MatlabReceiverAntenna}.
+
+The width of the patch antenna can be calculated with \autoref{eq:receiverAntenna1}. 
+\begin{align} 
+W_{patch} = \frac{c}{2 \cdot f} \cdot \sqrt{\frac{2}{\varepsilon_{r} + 1}} \addunit{\si{\meter}} \label{eq:receiverAntenna1} 
+\end{align}
+\startexplain
+\explain{$W_{patch}$ is the width of the antenna patch}{\si{\meter}}
+\explain{$c$ is the speed of light in vacuum}{\si{\meter\per\second}}
+\explain{$f$ is the frequency}{\si{\hertz}}
+\explain{$\varepsilon_{r}$ is relative permittivity of the material}{\si{\farad\per\meter}}
+\stopexplain
+
+The length of the antenna patch can be calculated by inserting Equations \ref{eq:receiverAntenna3} and \ref{eq:receiverAntenna4} into \autoref{eq:receiverAntenna2}. 
+\begin{subequations}
+\begin{align} 
+L_{patch} &= \frac{c}{2 \cdot f \cdot \sqrt{\varepsilon_{reff}}} - 2\cdot \Delta L \addunit{\si{\meter}} \label{eq:receiverAntenna2} \\
+\varepsilon_{reff} &= \frac{\varepsilon_{r} + 1}{2} + \frac{\varepsilon_{r} - 1}{2}\cdot \frac{1}{\sqrt{1+ \frac{12\cdot h}{W}}} \addunit{\si{\farad\per\meter}} \label{eq:receiverAntenna3} \\
+ \Delta L &= 0.412\cdot h \cdot \frac{\left(\varepsilon_{reff} + 0.3\right)\cdot \left(\frac{W}{h} +0.264\right)}{\left(\varepsilon_{reff} - 0.258\right)\cdot\left(\frac{W}{h} +0.8 \right)} \addunit{\si{\meter}} \label{eq:receiverAntenna4} 
+\end{align}
+\end{subequations} 
+\startexplain
+\explain{$L_{patch}$ is the length of the antenna patch}{\si{\meter}}
+\explain{$\varepsilon_{reff}$ is the effective relative permittivity of the material}{\si{\farad\per\meter}}
+\explain{$\Delta L$ is half the difference between the physical and electrical length of the patch}{\si{\meter}}
+\explain{$h$ is the thickness of the substrate}{\si{\meter}}
+\stopexplain
+
+To find the antenna strip width, a system of two equations is solved. The two equations are gives by Equations \ref{eq:receiverAntenna5} and \ref{eq:receiverAntenna6}.
+\begin{subequations}
+\begin{align} 
+Z_{c} &= \frac{\frac{120\cdot \pi}{\sqrt{\varepsilon_{strip}}}}{\frac{W_{strip}}{h}+1.393+0.667\cdot \ln\left(\dfrac{W_{strip}}{h}+1.444\right)} \addunit{\si{\ohm}} \label{eq:receiverAntenna5} \\
+\varepsilon_{strip} &= \dfrac{\varepsilon_{r}+1}{2}+\frac{\varepsilon_{r}-1}{2}\cdot \left(1+12\cdot \frac{h}{W_{strip}}\right)^{-\frac{1}{2}} \addunit{\si{\farad\per\meter}} \label{eq:receiverAntenna6} 
+\end{align}
+\end{subequations} 
+\startexplain
+\explain{$Z_{c}$ is the characteristics impedance of the strip}{\si{\ohm}}
+\explain{$\varepsilon_{strip}$ is the effective relative permittivity of the strip}{\si{\farad\per\meter}}
+\explain{$W_{strip}$ is the width of the antenna strip}{\si{\meter}}
+\stopexplain
+
+To calculate the the length of the two feeding slots, Equations \ref{eq:receiverAntenna8} and \ref{eq:receiverAntenna9} are inserted into \autoref{eq:receiverAntenna7}.
+\begin{subequations}
+\begin{align} 
+L_{feed} &= \arccos\left(\frac{\sqrt{Z_{in}\cdot R_{in}}}{Z_{in}}\right)\cdot \frac{L}{\pi} \addunit{\si{\meter}} \label{eq:receiverAntenna7} \\
+Z_{in} &= \frac{1}{2\cdot G1} \addunit{\si{\ohm}} \label{eq:receiverAntenna8} \\  
+G1 &= W_{strip} \cdot \left(1-\frac{1}{24}\right) \cdot \frac{\frac{2 \cdot \pi \cdot h}{\lambda}}{120\cdot \lambda} \addunit{\si{\siemens}} \label{eq:receiverAntenna9} 
+\end{align}
+\end{subequations} 
+\startexplain
+\explain{$L_{feed}$ is the length of the feed sloths}{\si{\meter}}
+\explain{$Z_{in}$ is the input impedance of the antenna}{\si{\ohm}}
+\explain{$R_{in}$ is the input resistance of the system}{\si{\ohm}}
+\explain{$G1$ is the transformed input admittance}{\si{\siemens}}
+\explain{$\lambda$ is the wavelength}{\si{\meter}}
+\stopexplain
+
+To make the antenna, different combinations of materials are available during design. This project considers two material combinations, FR4 PCB or a PP (Polypropylene) substrate with copper tape. A comparison of the material are given in \autoref{tab:antennaDesign:materialConstants}. 
+\begin{table}[h]
+\centering
+\caption{Materials properties.}\label{tab:antennaDesign:materialConstants}
+\begin{tabular}{l l l}
+\textbf{Type}	& \textbf{Relative permittivity ($ \varepsilon_r$)} & \textbf{Substrate height ($h$)} 	\\ \toprule \rowcolor{lightGrey}
+FR4 PCB& \SI{4.5}{} & \SI{1.5}{\milli\meter} 	\\
+PP with copper tape & \SI{2.2}{} & \SI{3}{\milli\meter}  
+\end{tabular}
+\end{table}
+
+From analysing Equations \ref{eq:receiverAntenna1} and \ref{eq:receiverAntenna2}, it is seen that the use of FR4 PCB results in a physically smaller antenna. Small receiver antennas are preferred since, three antennas have to be mounted on the antenna stand, therefore FR4 PCB is chosen as the substrate for the antenna. Before the antenna is constructed, the size of the ground plane must be determined. To determine the ground plane size, the arrangement of the antennas must be taken into consideration.
+
+\subsubsection{Arrangement of the receiving antennas}
+When deciding how to arrange the receiving antennas on the stand, two methods are considered. The formations are illustrated on \autoref{fig:design:antennaMountingArrangement}.
+\begin{enumerate}
+\item The two bottom antennas are spaced the distance $l$ apart, and the top antenna is placed in the middle, creating a triangular formation. 
+\item The two bottom antennas are spaced the distance $l$ apart, and the top antenna is positioned straight above one of the bottom antennas, creating an L formation.
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/design/ReceiverAntenna/antennaMountingArrangement}
+\caption{Illustration of the two different arranging solutions. The triangular formation is on the left and the L formation is on the right. The distance $l$ is approximately equal to half the wavelength of the tracking signal in free air, $\frac{\lambda_0}{2}$.}\label{fig:design:antennaMountingArrangement}
+\end{figure}
+
+The simple approach is using the L formation. This way the system receives two phase differences, one for azimuth and one for elevation which can be used directly. Using the triangular approach, the system also receives two phase differences, one for azimuth and one for elevation. The phase difference for elevation does however contain an azimuth component which has to be removed.
+
+By using the triangular formation, the weight of the antennas is distributed more evenly, but considering the increased complexity introduced by using the triangular formation, the L formation is assessed as being the better choice.
+
+Using the L formation, the distance between the antennas $l$ has to be less than half the wavelength in air $\frac{\lambda_0}{2}$ as stated in \autoref{PhaseDifferenceDetection}. As big a distance between the antennas as possible is wanted, since the error of the \gls{aoa} estimation is inverse proportional to the distance between the antennas, as stated in \autoref{PhaseDifferenceDetection} by \autoref{eq:phase_doa_error}. The distance between the antennas $l$ is therefore calculated by \autoref{eq:design:antennaDistanceL}, but rounded down to avoid phase ambiguity as mentioned in \autoref{PhaseDifferenceDetection}.
+
+\begin{equation}
+l = \frac{\lambda_0}{2} = \frac{c}{2f_t}= \frac{\SI{299792458}{\meter\per\second}}{2\cdot \SI{864}{\mega\hertz}} = \SI{173.49}{\milli\meter} \to \SI{172}{\milli\meter}\label{eq:design:antennaDistanceL}
+\end{equation}
+\startexplain
+\explain{$c$ is speed of light in vacuum}{\si{\meter\per\second}}
+\explain{$f_t$ is the frequency of the tracking signal}{\si{\hertz}}
+\explain{$l$ is the spacing between the antennas}{\si{m}}
+\stopexplain
+
+\subsubsection{Construction and test of the receiving antennas}
+The antennas should be spaced $l=\SI{172}{\milli\meter}$ apart. The ground plane width of the two bottom antennas is chosen as $W_{GND}=\SI{172}{\milli\meter}$, so the width of ground plane is the same on each side of the antennas. The length is arbitrarily chosen as $L_{GND}=\SI{153}{\milli\meter}$. The length of the feed strip should not matter as long as the intrinsic impedance is $\SI{50}{\ohm}$ and the length is exactly same for all the antennas. A difference of length in the feed strip results in a phase difference. A feed strip length of $L_{feed} =\SI{33.7}{\milli\meter}$ is chosen so the bottom antennas are centered on the ground plane. Lastly a feed slot width of $W_{slot}=\SI{3}{\milli\meter}$ is arbitrarily chosen based on experience. The ground plane sizes of the top antenna is chosen so the antenna spacing is correct, and the feed strip length is the same.
+
+The rest of the antennas' dimensions are calculated by a Matlab script, which is seen in \autoref{Code:MatlabReceiverAntenna}. Now that all the antenna dimensions are known, the antennas are constructed with a \gls{sma} connector attached. A summery of the actual antenna dimensions and the calculated is given in \autoref{tab:antennaDesign:antennaDimensions}. 
+
+\begin{table}[h!]
+	\centering
+	\caption{Table showing the calculated and resulting antenna dimensions after construction. The given $W_{GND}$ and $L_{GND}$ values are only for the two bottom antennas. }\label{tab:antennaDesign:antennaDimensions}
+	\begin{tabular}{l l l l}
+\textbf{Name}		& \textbf{Symbol} & \textbf{Desired value} 	& \textbf{Resultant value} 	\\ \toprule \rowcolor{lightGrey}
+Patch width			& $W_{patch}$ & \SI{104.619}{\milli\meter}  	& \SI{104.5}{\milli\meter}		\\ 
+Patch length		& $L_{patch}$ & \SI{81.633}{\milli\meter} 		& \SI{81.5}{\milli\meter} 		\\ \rowcolor{lightGrey}
+Strip width			& $W_{strip}$  & \SI{2.841}{\milli\meter}  		& \SI{3}{\milli\meter} 		\\
+Strip length		& $L_{strip}$  & \SI{33.664}{\milli\meter}  		& \SI{33}{\milli\meter} 		\\\rowcolor{lightGrey}
+Feed Slot width			& $W_{Feed}$ 	& \SI{3}{\milli\meter}					& \SI{3}{\milli\meter}  		\\
+Feed Slot length			& $L_{Feed}$ & \SI{27.173}{\milli\meter} 	& \SI{13}{\milli\meter} 		\\ \rowcolor{lightGrey}
+GND plane width		& $W_{GND}$ 	& \SI{172}{\milli\meter} 						& \SI{172}{\milli\meter}  	\\ 
+GND plane length	& $L_{GND}$ 	& \SI{153}{\milli\meter}						& \SI{153}{\milli\meter} 
+	\end{tabular}
+\end{table}
+
+Since the slot length calculations in \autoref{Code:MatlabReceiverAntenna} are merely approximations, an antenna with a shorter slot length is constructed. The slot length is then cut to fit, using a dremmel while measuring the reflections on a network analyser.
+
+On \autoref{fig:design:antennasReceiverMounted} is a picture of the three constructed antennas, attached to the antenna stand in the L formation.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/design/ReceiverAntenna/MaximesFavoritePicture}
+\caption{The three receiving patch antennas attached to the antenna stand.}\label{fig:design:antennasReceiverMounted}
+\end{figure}
+
+With the three receiver antennas now designed and constructed, their performance is measured.
+
+\subsubsection{Measurement of the antennas}
+The three constructed antennas S{11} parameters are analysed with a network analyser. The result is seen on \autoref{fig:S11Measurement}. 
+
+\begin{figure}[h!]
+    \centering
+        \includegraphics[width=\textwidth]{figures/design/ReceiverAntenna/S11Mes}
+        \caption{Measurement of the power reflected back for the three receiver antennas.}
+        \label{fig:S11Measurement}
+\end{figure}
+
+The parameter $S{11}$ is the input port voltage reflection coefficient, and it describes the power of the voltage reflected back to the source by the antenna. A small reflection coefficient is desired because the energy reflected back is not radiated in the antenna.  
+
+From \autoref{fig:S11Measurement} it is seen that the three antennas do not have the exact same curvature. This might be due to processing variations and material tolerances. With the chosen frequency at $\SI{864}{\mega\hertz}$ all three antennas have a S11 parameter of less than $\SI{-10}{\deci\bel}$. However by looking closer at the curvatures, it can be seen that a frequency of $\SI{869}{\mega\hertz}$, is the frequency where the sum of input port voltage reflection coefficients are lowest. At this point antenna 2 has its lowest possible reflection coefficient. Antenna 1 and 3 have an acceptable reflection coefficient, where the worst S11 parameter is $\SI{-22.18}{\deci\bel}$ at $\SI{869}{\mega\hertz}$. 
+
+In order to have the best possible S11 parameters it is chosen to change the desired operation frequency from \SI{864}{\mega\hertz} to \SI{869}{\mega\hertz} to achieve a better reflection coefficient. The frequency \SI{869}{\mega\hertz} is in the allowed band \citep{web:RegulationFreq} and has the same limits on power as found in \autoref{sec:choosing_a_frequency}.  
+
+A test of antenna 2 was conducted to measure realized gain pattern of the patch antennas. Only one antenna is measured, since it is assessed that the antennas have approximately the same propagation patterns. It is tested in anechoic chamber with help of Kristian Bank, engineering assistant from Aalborg University. The results of the test are shown on \autoref{fig:design:antennaReveicersTestPropagation}.
+
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{figures/design/ReceiverAntenna/antennaTransmission2D}
+    \end{subfigure}
+    ~ 
+    \begin{subfigure}[b]{0.45\textwidth}
+       \includegraphics[width=\textwidth]{figures/design/ReceiverAntenna/antennaTransmission3D}
+    \end{subfigure}
+    \caption{Plot of the data, from a measurement of the realized gain of antenna 2, in respect to the spherical coordinates, $\phi$ and $\theta$. The test was done with a \SI{870}{\mega\hertz} signal.}\label{fig:design:antennaReveicersTestPropagation}
+\end{figure}
+
+It is seen from \autoref{fig:design:antennaReveicersTestPropagation} that the maximum realized gain is $G_{max} = \SI{0.03}{\deci\beli}$, which is lower than the expected \SI{3}{\deci\beli}. Realized gain is a measure of gain with loss due to reflections included. The overall efficiency of the antenna is measured as 22\%. 
+%
+%
+%Mismatch between the measurement equipment and the antennas have influence on low gain. To get higher gain and efficiency, a match is preferred but not done in this project. 
+%
+The antennas have a high directionality and approximately \SI{-12}{\deci\beli} realized gain for signals behind the antenna, which correlates with the expected gain pattern. Seeing as the antennas have desired gain pattern, although with low realized gain, it is assessed that the antennas is sufficient for the purpose of the project.
+
+
+
+\subsection{Transmitting antenna}
+To transmit the tracking signal a single antenna is used. The drone is not always faced towards the antenna and therefore an isotropic antenna is preferred but however that is not possible. An omnidirectional dipole is chosen. 
+
+In this project it is delimited from designing a transmitting antenna and is decided to acquire an already constructed antenna. One antenna with the wanted characteristics is available, W1063 \citep{datasheet:isotropicDipole}. Its characteristics are as listed in \autoref{tab:TransmittingAntennaCharacteristics}.
+\begin{table}[h!]
+	\centering
+	\caption{Electrical specifications of the transmitting antenna.}\label{tab:TransmittingAntennaCharacteristics}
+	\begin{tabular}{ll}
+		\textbf{Property} & \textbf{Value} \\ \toprule \rowcolor{lightGrey}
+		Name 		& W1063 \\
+		Weight	& \SI{25.6}{\gram} \\ \rowcolor{lightGrey}
+		Frequency range & 868 – 928 \si{\mega\hertz} \\ 
+		Gain & \SI{3}{\deci\beli}\\ \rowcolor{lightGrey}
+		\gls{swr} & $\leq$ 2 \\ 
+	\end{tabular}
+	\caption*{\citep{datasheet:isotropicDipole}}
+\end{table}
+
+The antenna is tested on a network analyser and a S11 of \SI{-9.5}{\deci\bel} and a \gls{swr} of \SI{2}{}. To conclude the antenna design, a test of transmission between the antennas is conducted.
+
+\subsection{Test of transmission between the antennas}\label{sec:AntennaTest}
+Transmission between the transmitting antenna and a receiving antenna is tested in \autoref{appendix:antennaTransmission}. During testing it is observed that the received power follows Friis equation with slight deviations. The test setup is however not free of reflecting surfaces which might greatly affect the results. The receiving antennas have gain patterns as illustrated in \autoref{fig:design:antennaReveicersTestPropagation}, with a maximum realized gain of \SI{0.03}{\deci\beli}. The omni directional transmitter has a maximum gain of \SI{3}{\deci\beli} and a \gls{swr} of less than 2 \citep{datasheet:isotropicDipole}. The maximum power lost to mismatch is \SI{0,51}{\decibel} giving a realised gain of \SI{2,49}{\deci\beli} in the worst conditions. 
+
+The properties of the patch antennas are deemed sufficient for further use.

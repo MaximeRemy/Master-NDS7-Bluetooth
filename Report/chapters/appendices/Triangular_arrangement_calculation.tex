@@ -1,0 +1,38 @@
+Considering a three dimensional xyz-coordinate system, the center point for each of the antennas of the triangular formation, could be represented by three points as given in \autoref{eq:design:antennaPositions}.
+\begin{equation}
+A_1 = \left( \frac{-l}{2},0,0 \right) \wedge A_2 = \left( \frac{l}{2},0,0\right) \wedge A_3 = \left( 0 ,l \sin (\SI{60}{\degree}),0\right)\label{eq:design:antennaPositions}
+\end{equation}
+
+As in \autoref{sec:detSignalDistanceDifference}, we assume the transmitter is far away from the receiver, with this assumption we can model the received signal as travelling parallel to all the antennas, as if the signals were sent from a plane in the three dimensional space.
+The distance from a point to a plane is given by \autoref{eq:design:distancePointToPlane} \citep{web:PointPlaneDistance}. 
+\begin{equation}
+D_{n}(x,y,z) = \frac{a x + b y + c z + d}{\sqrt{a^2 + b^2 + c^2}}\label{eq:design:distancePointToPlane}
+\end{equation}
+\startexplain
+\explain{$D(x,y,z)$ in the distance from the point to the plane}{\si{\meter}}
+\explain{$n$ in the index indication the antenna number}{\si{1}}
+\explain{$a, b$ and $c$ defines the plane}{\si{\meter}}
+\explain{$d$ defines the plane}{\si{\meter\squared}}
+\explain{$x,y$ and $z$ is the coordinates of the antennas center point}{\si{\meter}}
+\stopexplain
+
+By defining another point, $A_4 = (0,0,0)$ (the center point) and four distances $D_1 , D_2 , D_3$ and $D_4$ denoting four distances from each of the antennas to the plane. From these distances we can define three phase differences, given by Equations \ref{eq:design:phasePointToPlane1}, \ref{eq:design:phasePointToPlane2} and \ref{eq:design:phasePointToPlane3}.
+\begin{subequations}
+\begin{align} 
+\Delta\varphi_1 &=\frac{2\pi}{\lambda_0}(D_1 - D_2) =\frac{2\pi}{\lambda_0} \frac{-a\cdot l}{\sqrt{a^2 + b^2 + c^2}} \addunit{\si{\radian}} \label{eq:design:phasePointToPlane1} \\
+\Delta\varphi_2 &=\frac{2\pi}{\lambda_0}(D_3 - D_2) =\frac{2\pi}{\lambda_0} \frac{- a\cdot \frac{l}{2}+b\cdot l \cdot  \sin (\SI{60}{\degree})}{\sqrt{a^2 + b^2 + c^2}} \addunit{\si{\radian}} \label{eq:design:phasePointToPlane2} \\
+\Delta\varphi_3&=\frac{2\pi}{\lambda_0}(D_3 - D_4) =\frac{2\pi}{\lambda_0} \frac{ b\cdot l \cdot  \sin (\SI{60}{\degree}) }{\sqrt{a^2 + b^2 + c^2}} \addunit{\si{\radian}} \label{eq:design:phasePointToPlane3} 
+\end{align}
+\end{subequations} 
+\startexplain
+\explain{$\lambda_0$ is the wavelength of the tracking signal in air}{\si{\meter}}
+\explain{$\Delta\varphi_n$ is the $n$'th phase difference between the signals received by the antennas}{\si{\radian}}
+\stopexplain
+Phase difference $\Delta\varphi_1$ and $\Delta\varphi_2$ can be found found be sampling the signal received at the antennas. phase difference $\Delta\varphi_3$ needs to be deducted from $\Delta\varphi_1$ and $\Delta\varphi_2$. 
+
+By comparison of the three phase differences, we see that the phase difference, $\Delta\varphi_2$, is composed of two components, a elevation phase, $\Delta\varphi_3$, and half of the the azimuth phase $\Delta\varphi_1$. We can write up \autoref{eq:design:elevationPointToPlanePhase}.
+
+\begin{equation}
+\Delta\varphi_3 = \Delta\varphi_2 - \frac{\Delta\varphi_1}{2} \addunit{\si{\radian}} \label{eq:design:elevationPointToPlanePhase}
+\end{equation}
+So by using the triangular antenna formation, the phase difference in the elevation plane, has to be subtracted by half of phase difference in the azimuth plane.

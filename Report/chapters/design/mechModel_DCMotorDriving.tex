@@ -1,0 +1,367 @@
+
+In this chapter both the \gls{dc} motor driver, \gls{dc} motor controller, stepper motor driver and stepper motor controller are designed and implemented, to comply with \autoref{req:mech_precision} and \autoref{req:mech_speed}, stating that the steady-state error in angle $e_{\phi} \leq \SI{2.08}{\milli\radian}$ and the maximum angular velocity $\omega_\phi \geq \SI{1.236}{\radian\per\second}$. 
+To finish the feedback control loops, as presented in \autoref{sec:introToDesign} and is on \autoref{design:fig:controlSystemAzimuth2} and \ref{design:fig:controlSystemElevation2}, controllers and drivers for the motors have to be designed. The controllers should ensure smooth and quick movement, as well as avoid instability, while the drivers should have a low response time and stable output. 
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/design/intro/controlSystemAzimuth}
+\caption{Control system for maintaining an azimuth angle of the antenna stand, which is the same azimuth angle as the drone's direction.}\label{design:fig:controlSystemAzimuth2}
+\end{figure}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/design/intro/controlSystemElevation}
+\caption{Control system for maintaining an elevation angle of the antenna stand, which is the same elevation angle as the drone's direction.}\label{design:fig:controlSystemElevation2}
+\end{figure}
+
+The transfer function of the feedback control system in \autoref{design:fig:controlSystemAzimuth2} described in the introduction \autoref{sec:introToDesign} can be derived.
+If it is assumed that $\phi_s(t) = 0$, then a transfer function for the relationship between the reference value and the azimuth angle of the stand, $H_{\phi r}(s)$, is yield in \autoref{design:eq:TFReferenceAzimuth}.
+\begin{equation}
+H_{\phi r}(s)=\frac{\phi_s (t)}{r_\phi (t)}=\frac{D_\phi (s)\cdot G_{DCM}(s)\cdot G_\phi (s)}{1+ D_\phi (s)\cdot G_{DCM}(s)\cdot G_\phi (s)\cdot T(s)}\label{design:eq:TFReferenceAzimuth}
+\end{equation}
+
+If it assumed that $r_\phi (t)=0$, then a transfer function between the azimuth angle towards the drone and the azimuth angle of the antenna, $H_{\phi d}(s)$, is yield in \autoref{design:eq:TFDroneAngleAzimuth}.
+\begin{equation}
+H_{\phi d}(s)=\frac{\phi_s (t)}{\phi_d (t)}=\frac{T(s)\cdot D_\phi (s)  \cdot G_{DCM}(s) \cdot G_\phi (s)}{1+T(s) \cdot D_\phi (s) \cdot G_{DCM}(s) \cdot G_\phi (s)} \label{design:eq:TFDroneAngleAzimuth}
+\end{equation}
+
+The dynamic properties of the transfer function $H_{\phi d}(s)$ describes the performance of the tracking system. The lower the settling time and rise-time this function has in the time domain, the faster and more responsive the overall tracking solution is. The transfer function is used to determine the performance. 
+
+The controller and driver for the DC motor are designed first then the controller and driver for the stepper motor are designed afterwards. 
+
+The elevation control system is handled differently relative to the azimuth control, since a stepper motor does not work in the same linear fashion as an ordinary DC motor. The stepper motor moves in discrete steps of a given angle, as described in \autoref{sec:techAnalAnalOfStepMotor}. For this reason, no transfer function is determined for the stepper motor. Instead the switching frequency and step size of the stepper driver, together with the transfer function of the tracking system, $T(s)$, is used to determine the speed and performance of the tracking system in the elevation plane. 
+
+
+\section{DC motor}\label{sec:design:DCMotorController}
+The \gls{dc} motor controls the azimuth rotation of the antenna stand. In order to ensure a quick and stable adjustment of the azimuth angle of the antenna stand, a driver and controller for the DC motor is designed.
+In terms of driving the DC motor, it is chosen to use an \gls{ic}. The \gls{ic} must be able to handle the high currents, which are needed to apply the necessary torque, to make the antenna stand rotate. The DC motor driver should preferably also be able to change the direction in which the motor is rotating.
+
+It is chosen to control the DC motor through the \gls{psoc}. Therefore a digital controller is implemented on the \gls{psoc}, this controller regulate the output voltage based on a reference angle, which is provided by the tracking module.
+
+\subsection{DC motor controller design}\label{sec:design:DCMotorControllerDesign}
+A controller for the DC motor is designed, to ensure that the collective feedback control system on \autoref{design:fig:controlSystemAzimuth2} has quick and stable response to any input. The controller is designed to improve the response in respect to the direction of the transmitter and thus drone $\phi_d$ instead of the reference value $r_\phi$ since the system has to react quickly to changes in $\phi_d$ to track efficiently. The angle $\phi_d$ is therefore seen as the main input of the feedback control system.
+%The motor should rotate the whole antenna stand, therefore it is needed to make a bode plot of the open loop transfer function describing the antenna stands azimuth angle, in order to see if the system is stable. 
+
+The design of the DC controller is split into two parts. 
+\begin{enumerate}
+\item The frequency characteristics of the open loop function is analysed to determine whether the controller should have a phase shift or specific gain, to ensure stability.
+\item The time domain properties are analysed and the controller is optimised to improve these without causing stability issues.
+\end{enumerate}
+
+By evaluating \autoref{design:fig:controlSystemAzimuth2} it can be derived that the open loop transfer function of the system, as seen from the drone angle $\phi_d (t)$ is as stated in \autoref{eq:mechDCcontrollerOpenLoopTF1}.
+\begin{equation} \label{eq:mechDCcontrollerOpenLoopTF1} 
+OL_{\phi d}(s) = T(s) \cdot D_\phi (s) \cdot G_{DCM}(s) \cdot G_\phi (s)
+\end{equation}
+\startexplain
+\explain{$OL_{\phi d}(s)$ is the open loop transfer function of the feedback control system}{1}
+\explain{$T(s)$ is a model of tracking system}{1}
+\explain{$D_\phi (s)$ is the controller}{1}
+\explain{$G_{DCM}(s)$ is a model of the DC motor driver}{1}
+\explain{$G_\phi (s)$ is a model of the antenna stand}{1}
+\stopexplain
+
+The tracking and signal processing is assessed to take approximately \SI{5}{\milli\second} to execute. In terms of simulations, this is modelled as $T(s) = \exp^{-5 \cdot 10^{-3} \cdot s}$.
+
+By considering the DC motor driver as unity gain, $G_{DCM}(s) = 1$, and inserting $D_\phi (s)= 1 $ and the expression for $G_\phi (s)$ from \autoref{eq:DCMotorHsDoneConclusion} (found in \autoref{sec:AnalysisMotorisedStand}) combined with the approximated of $T(s)$, into \autoref{eq:mechDCcontrollerOpenLoopTF1} yields \autoref{eq:mechDCcontrollerOpenLoopTF2}. 
+\begin{align} 
+OL_{\phi d}(s) = \frac{\SI{55358.174}{}\cdot \exp^{-5 \cdot 10^{-3} \cdot s}}{s^2+ \SI{15954.501}{} s +\SI{182889.04}{}} \frac{1}{s}\label{eq:mechDCcontrollerOpenLoopTF2} 
+\end{align}
+
+A bode plot of the open loop transfer function, \autoref{eq:mechDCcontrollerOpenLoopTF2}, is seen on \autoref{fig:BodePlotDCMotor}. 
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=\textwidth]{figures/design/DCMotor/Margin}
+	\caption{Plot of the simulated frequency response of the azimuth feedback control system, with the controller $D_\phi (s) = 1$}
+	\label{fig:BodePlotDCMotor}
+\end{figure}
+
+\autoref{fig:BodePlotDCMotor} shows that the system is stable, with a gain margin of \SI{56.4}{\deci\bel} and a phase margin of \SI{88.4}{\degree}. Since the system is stable, stability is not the initial concern when designing the controller. 
+
+By analysing the time domain properties of a unit step response of the closed loop transfer function, the rise time and overshoot is obtained. The closed loop transfer function \autoref{design:eq:TFDroneAngleAzimuth}, as seen in \autoref{eq:mechDCcontrollerCloseLoopTF1}, can be rewritten to \autoref{eq:mechDCcontrollerCloseLoopTF3} by insertion of values. 
+\begin{subequations}
+\begin{align} 
+H_{\phi d}(s)&=\frac{\phi_s (t)}{\phi_d (t)}=\frac{T(s) \cdot D_\phi (s) \cdot G_{DCM}(s) \cdot G_\phi (s)}{1+T(s) \cdot D_\phi (s) \cdot G_{DCM}(s) \cdot G_\phi (s)} \label{eq:mechDCcontrollerCloseLoopTF1} \\
+H_{\phi d}(s) &= \frac{\SI{55358.174}{} \cdot \exp^{-5\cdot 10^{-5} s}}{s^3 + \SI{15954.501}{} s^2 + \SI{182889.04}{} s + \SI{55358.174}{}\cdot \exp^{-5 \cdot 10^{-3} s}} \label{eq:mechDCcontrollerCloseLoopTF3} 
+\end{align}
+\end{subequations}
+
+A graph of a unit step response of the closed loop transfer function, \autoref{eq:mechDCcontrollerCloseLoopTF3}, is seen on \autoref{fig:StepPlotDCMotor}. 
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=\textwidth]{figures/design/DCMotor/Step}
+	\caption{Simulated unit step response of the azimuth feedback control system, based on the transfer function $H_{\phi d}$.}
+	\label{fig:StepPlotDCMotor}
+\end{figure}
+
+\autoref{fig:StepPlotDCMotor} shows a rise time of more than 5 seconds which is assessed to be too long to properly follow sudden movements from the drone. A controller which ensures a shorter rise time is desired.  
+
+\newpage
+For the controller, a \gls{pid} controller is considered. A \gls{pid} controller has three parameters $K_p$, $K_i$ and $K_d$. The Laplace domain representation of a \gls{pid} controller is given in \autoref{eq:PDController}.
+\begin{equation}\label{eq:PDController}
+	D(s) = K_p + K_i \cdot \frac{1}{s} + K_d\cdot s 
+\end{equation}
+\startexplain
+\explain{$D(s)$ is the controller}{1}
+\explain{$K_p$ is the proportional gain}{1}
+\explain{$K_i$ is the integral gain}{1}
+\explain{$K_d$ is the derivative gain}{1}
+\stopexplain
+The $K_p$ parameter reduce the rise time, but increases the overshoot. The $K_i$ parameter reduce the steady state error. The $K_d$ parameter decrease the overshoot and the settling time. This way $K_d$ can be used to counters the cons of $K_p$ \citep{web:CTMS}.
+
+From \autoref{eq:mechDCcontrollerOpenLoopTF2} it can be seen that $G_\phi (s)$ already contains an integrator in the form of $\frac{1}{s}$. Therefore, the steady-state error in the step response should be zero if the system is linear. The system is not completely linear, resulting in a steady state error. This error is considered in \autoref{sec:design:requirementConsiderationsDC}. The steady-state error is however not zero for the ramp response, even without taking the non linearities into consideration. This is mistakenly overlooked, and a \gls{pd} controller is deemed sufficient initially without considering an integration.
+
+To determine the two parameters of the controller a trial and error method is used. The value of $K_d$ is temporarily set to 0 and the step response of $H_{\phi d}(s)$ is analysed as $K_p$ is varied, until an acceptable rise time for the unit step is obtained. Different values of $K_d$ are then applied until an acceptable overshoot is obtained.
+
+Since $D_\phi (s)$ is not assumed to be 1, but $D_\phi (s) = K_p + K_d\cdot s$, the transfer function is given as \autoref{eq:DCMotorStepEquation}. 
+\begin{align} 
+H_{\phi d}(s) &= (K_p + K_d \cdot s ) \cdot OL_{\phi d}(s) \label{eq:DCMotorStepEquation} 
+\end{align}
+
+\autoref{fig:DcMotorStepKp} shows the unit step response of $H_{\phi d}(s)$ with different $K_p$ values.
+
+\begin{figure}[h!]
+    \centering
+        \includegraphics[width=\textwidth]{figures/design/DCMotor/StepKp}
+        \caption{Simulations of the unit step response of the feedback control system, with a \gls{pd} controller with a $K_d = 0$ and varying $K_p$.}
+        \label{fig:DcMotorStepKp}
+\end{figure}
+
+From \autoref{fig:DcMotorStepKp} it is seen that having a $k_p = 30$ result in a rise time of \SI{225}{\milli\second}. It is possible to have a shorter rise time by choosing a bigger $k_p$, but that result in a bigger overshoot, therefore it is assessed that a rise time of \SI{225}{\milli\second} is sufficiently short for the system. 
+
+With a $K_p = 30$ chosen, a $K_d$ must be determined. The unit step response at different values of $K_d$ is seen on \autoref{fig:DCMotorStepKd}. 
+\begin{figure}[h!]
+    \centering
+        \includegraphics[width=\textwidth]{figures/design/DCMotor/StepKd}
+        \caption{Simulations of the unit step response of the feedback control system, with a \gls{pd} controller with a $K_p = 30$ and varying $K_d$.}
+        \label{fig:DCMotorStepKd}
+\end{figure}
+
+From \autoref{fig:DCMotorStepKd} it is seen that a $K_p = 30$ and a $K_d = 2$ offers a good compromise between rise time and overshoot. The system then have a rise time of \SI{250}{\milli\second}, a nearly non-existent overshoot and a settling time of \SI{250}{\milli\second}. 
+
+These values are assessed to make for a smooth and quick response and are therefore chosen.
+
+To check the stability of the system with the controller $D_\phi (s) = 30 + 2 \cdot s$ the frequency response of the open loop transfer function $OL_\phi (s)$ from \autoref{eq:mechDCcontrollerOpenLoopTF1}, is calculated. The result is given on \autoref{fig:DCMotorMarginWController}. 
+\begin{figure}[h!]
+    \centering
+        \includegraphics[width=\textwidth]{figures/design/DCMotor/MarginWController}
+        \caption{Plot of the simulated frequency response of the azimuth feedback control system with the controller $D_\phi (s) = 30 + 2 s$.}
+        \label{fig:DCMotorMarginWController}
+\end{figure}
+
+\autoref{fig:DCMotorMarginWController} shows that the system is still stable, however with a gain margin of \SI{32.7}{\deci\bel} and a phase margin of \SI{180}{\degree}. These margins are assumed to be sufficient, but the controller is adjusted if the tests in \autoref{ch:testing} show otherwise. 
+
+
+To finish the controller design, the controller is considered in respect to \autoref{req:mech_precision} and \autoref{req:mech_speed}.
+\subsection{Considerations in regards to complying with specified requirements}\label{sec:design:requirementConsiderationsDC}
+\subsubsection{\autoref{req:mech_precision}}
+\autoref{req:mech_precision} states that the stand must point in the indicated direction with a maximum angular deviation of less than \SI{2,08}{\milli\radian} in azimuth angle and less than \SI{2,08}{\milli\radian} in the elevation angle.
+
+As previously mentioned and observed in \autoref{appendix:TJStandConstants}, the friction coefficient is not constant, and the motor stand stops rotating at voltages below $V_{start}=\SI{1.76}{\volt}$. Choosing $K_p = 30$, result in that the motor do not rotate at constant error signals below $e_{\phi} = \frac{V_{start}}{K_p} =  \frac{\SI{1.76}{\volt}}{\SI{30}{\volt\per\radian}} = \SI{5.87}{\milli\radian}$. This means that the DC motor controller do not fulfil \autoref{req:mech_precision}, since $e_{\phi} \leq \SI{5.87}{\milli\radian} \nleq \SI{2.08}{\milli\radian}$. The output of the DC motor controller is therefore increased to $V_{start} = \SI{1.76}{\volt}$ if the error signal is in the interval $\SI{1}{\milli\radian} < e_\phi \leq \SI{5.87}{\milli\radian}$ during programming in \autoref{sec:design:DCMotorPSoCProgramming}. Compensating the PD Controller this way should remove the steady-state error. However, using an integrative part could also solve this issue.
+
+To investigate the validity of the compensation approach, the unit step response of the system is simulated, with its nonlinearities using the model developed in \autoref{appendix:nonlinearAntennaStandModel}. The unit step response of the system is simulated with two different controllers, one with a compensated \gls{pd} controller and one with a \gls{pid} controller. The simulated responses are illustrated on \autoref{fig:design:DCControllerStepSimulation}.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{figures/design/DCMotor/UnitStepResponse}
+\caption{Simulated unit step resonse of nonlinear antenna stand control system with either a compensated \gls{pd} controller or a \gls{pid} controller. The model is developed in \autoref{appendix:nonlinearAntennaStandModel}.}\label{fig:design:DCControllerStepSimulation}
+\end{figure}
+
+The simulation shows that the compensated \gls{pd} controller offers a lower rise time, no overshoot and shorter settling time. This approach is however very dependent on compensating the \gls{pd} controller with the right voltage. Setting the voltage wrong might lead to instability or steady-state errors. The compensated \gls{pd} controller is simulated to give a better unit-step response and is therefore chosen. It is however noted that the \gls{pid} controller also offers no steady-state error and is not dependent on an exact compensation voltage, but with a longer settling time and higher overshoot.
+
+The illusion of the superiority of the compensated \gls{pd} controller is however quickly shattered when simulating the response to a changing signal, representing the drone moving at its maximum expected angular velocity $\omega_{dmax} = \SI{1.24}{\radian\per\second}$. \autoref{fig:design:DCControllerStepSimulationRamp} shows the position of the drone scaled 100:1 and the error between the direction of the antenna and the azimuth position of the drone.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{figures/design/DCMotor/ChangingSignalResponse}
+\caption{Simulated error response of the nonlinear antenna stand control system with a changing input, representing the drone moving at the maximum expected angular velocity. The simulation is done with two different controllers.}\label{fig:design:DCControllerStepSimulationRamp}
+\end{figure}
+
+The simulation in \autoref{fig:design:DCControllerStepSimulationRamp} shows that the \gls{pid} controller offers a lower error at any given time, if the drone is in movement. The compensated \gls{pd} controller is however quicker at aiming at the drone, when it is not moving. This scenario was overlooked during the design, and the compensated \gls{pd} controller is therefore chosen.
+
+\subsubsection{\autoref{req:mech_speed}}
+\autoref{req:mech_speed} states that the maximum angular velocity should  be $\omega_\phi \geq \SI{1.2361}{\radian\per\second}$. The motor must therefore be applied a voltage, which can be calculated by defining $\frac{\Omega_\phi(s)}{V_s(s)}= G_{\omega\phi}(s)$ which can be determined by differentiating \autoref{eq:DCMotorHsDoneConclusion}, found in \autoref{sec:ConclusionAntennaStandAnalysis}, which in the Laplace domain is $G_{\phi}(s)\cdot s$. Investigating the gain at $s= 0$, as in \autoref{eq:design:DCMotorSupplyVoltage}, the required voltage can be determined.
+\begin{equation}\label{eq:design:DCMotorSupplyVoltage}
+	V_{s} \geq \frac{\omega_{\phi min}}{G_{\omega\phi}(0)} = \frac{\SI{1.2361}{\radian\per\second}}{\frac{\SI{55.35717358}{}}{\SI{182.88904}{}} \si{\radian\per\second\per\volt}} = \SI{4.084}{\volt}
+\end{equation}
+\startexplain
+\explain{$G_{\omega\phi}(s)$ is equal to $G_{\phi}(s)\cdot s$}{1}
+\explain{$\omega_{\phi min}$ is the minimum angular frequency as specified by \autoref{req:mech_speed}}{\si{\radian\per\second}}
+\explain{$V_s$ is the supply voltage}{\si{\volt}}
+\stopexplain
+The maximum expected error signal is $|e_{\phi max}| = \frac{\pi}{2}$, which results in a voltage of $V_{emax}=\frac{\pi \cdot K_p}{2} \approx \SI{47}{volt}$. Since $V_{emax} \geq \SI{4.084}{\volt}$, the system comply with \autoref{req:mech_speed}, as long as $V_{s} \geq \SI{4.084}{\volt}$.
+
+With the controller design completed, an appropriate driver and implementation on the \gls{psoc} is needed.
+
+\subsection{DC motor driver analysis}
+As the DC motor driver a L298 dual full bridge driver \cite{datasheet:L298} is used because it is available and serves the purpose. It contains two full H-bridges, but only one is needed. One of the full H-bridges is therefore grounded. The full H-bridge structure allows driving the DC motor both forwards and backwards, as well as brake. Braking is done by grounding both terminals of the DC motor, thus practically applying an opposite torque proportional to the angular velocity of the DC motors rotor shaft. Neutral drive is done by leaving the DC motor's terminals unconnected. A full H-bridge structure consists of four transistors coupled to the motor. A schematic of the full bridge structure is seen on \autoref{fig:fullbridge}.
+\begin{figure}[h!]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\textwidth]{figures/design/FullBridgepos}
+		\caption{Current running through transistor T3 and T2}
+		\label{fig:fullbridgepos}
+	\end{subfigure}
+	~ 
+	\begin{subfigure}[b]{0.45\textwidth}
+		\includegraphics[width=\textwidth]{figures/design/FullBridgeneg}
+		\caption{Current running through transistor T1 and T4}
+		\label{fig:fullbridgeneg}
+	\end{subfigure}
+	\caption{The current through the DC motor depends on the transistors that are sketched as switches. On \ref{fig:fullbridgepos} the DC motor spins clockwise and on \ref{fig:fullbridgeneg} it spins counter clockwise.}
+	\label{fig:fullbridge}
+\end{figure}
+
+Depending on the driver inputs, the four transistors are either closed or open. When all transistors are closed (Open when seen as a switch.), no torque is applied to the antenna stand.
+To drive the motor forward transistors T1 and T4 on \autoref{fig:fullbridge} are open, so the positive pole of the motor is connected to the power supply, and the negative pole is grounded as seen on \autoref{fig:fullbridgeneg}, this causes current to flow through the motor and making it rotate.
+If only T3 and T2 are open, the current flow through the motor in the opposite direction, and the motor turn backwards, this case is seen on \autoref{fig:fullbridgepos}.
+If the motor is shorted by opening T1 and T3 or T2 and T4, the motor brakes because of the coil in the motor which produces a magnetic field opposite to the prior magnetic field. 
+
+The typical full bridge driver uses \texttt{AND}-gates to control the transistors. Depending on three inputs, \texttt{Input1}, \texttt{Input2} and \texttt{Enable}, the transistors are either switched on or off. An illustration of the \texttt{AND}-gate circuit is given on \autoref{fig:AndGates}. This way the four transistors can be controlled by only three inputs. 
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.5\textwidth]{figures/design/AndGate}
+	\caption{A schematic of the inputs and \texttt{AND}-gates that decide which transistors are open.}
+	\label{fig:AndGates}
+\end{figure}
+
+A truth table can be created from \autoref{fig:AndGates}, as listed in \autoref{tab:TrueTable}.
+
+\begin{table}[h!]
+	\centering
+	\caption{Truth table of schematic on \autoref{fig:AndGates}.} \label{tab:TrueTable}
+	\begin{tabular}{ c c c | c c c c | c }
+		\textbf{Input 1} & \textbf{Input 2} & \textbf{Enable} & \textbf{T1} & \textbf{T2} & \textbf{T3} & \textbf{T4} & \textbf{DC motor}	\\ 
+		\hline \rowcolor{lightGrey}
+	0 & 0 & 0 & 0 & 0 & 0 & 0 & Neutral 		\\ 
+	0 & 0 & 1 & 0 & 1 & 0 & 1 & Brake 			\\ \rowcolor{lightGrey}
+	0 & 1 & 1 & 0 & 1 & 1 & 0 & Backward 		\\ 
+	1 & 0 & 1 & 1 & 0 & 0 & 1 & Forward 		\\ \rowcolor{lightGrey}
+	1 & 1 & 1 & 1 & 0 & 1 & 0 & Brake 			\\ 
+	\end{tabular}
+\end{table} 
+From \autoref{tab:TrueTable} it is given that whenever the \texttt{Enable} is \texttt{HIGH}, the motor can be turned by setting either \texttt{Input1} or \texttt{Input2} to \texttt{HIGH}. If all three pins are pulled \texttt{HIGH}, the motor brakes. 
+
+To control the DC motor using the full bridge, the \texttt{Input 1}, \texttt{Input 2} and \texttt{Enable a} are connected to the \gls{psoc} and $V_{CC}$ and \texttt{GND} connections are made. 
+Diodes, D1, D2, D3 and D4 are connected, as recommended by the datasheet \cite{datasheet:L298} as surge protection. The actual pins on the \gls{psoc} are chosen in \autoref{ch:implementation}. An illustration is given in \autoref{fig:design:DCMotorDriverConnected}.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/design/DCMotor/DCMotorDriver}
+\caption{Diagram of how the DC motor driver is connected to the \gls{psoc} and power supply. The physical pins on the \gls{psoc}, used for DC motor control is chosen in \autoref{ch:implementation}.}\label{fig:design:DCMotorDriverConnected}
+\end{figure}
+
+The L298 full-bridge driver can only connect or disconnect the DC motor terminals to the power supply, and not set a specific voltage across the DC motor. The voltage will therefore have to be controlled by \gls{pwm}, which is described and implemented in \autoref{sec:design:PWMImplementation}. Now that a DC motor driver has been chosen, the use of it is implemented on the \gls{psoc}.
+
+
+\subsection{\gls{psoc} implementation of DC motor controller}\label{sec:design:PWMImplementation}
+The DC motor driver has three pins. These needs to be controlled by the \gls{psoc}. 
+
+From \autoref{tab:TrueTable} it is seen that whenever one of the DC motor driver input is \texttt{HIGH}, the motor is connected directly to the voltage source and accelerate towards full speed as long as the pin is \texttt{HIGH}. The DC motor controller requires that the voltage across the motor can be adjusted to different levels, in order to have the motor running at different speeds depending on input. Since the DC motor electrically works as a low-pass filter, \gls{pwm} can be used to control the DC motor's input voltage.
+
+The \gls{pwm} is implemented on the \gls{psoc}, where one \gls{pwm} module is used for both directions. A demultiplexer is then used to couple the \gls{pwm} module output to the appropriate driver input. To move the motor right, the \gls{pwm} signal is applied to the \texttt{DCMotorRight} pin and vice versa. The \gls{psoc} demultiplexer module is controlled by a control register, which in turn is controlled through software, programmed in C. The software programming is described in \autoref{sec:design:DCMotorPSoCProgramming}.
+
+The \gls{pwm} module, demultiplexer and control register are implemented on the \gls{psoc} as seen on \autoref{fig:DcMotorControllerSetup}. 
+\begin{figure}[h!]
+    \centering
+        \includegraphics[width=0.85\textwidth]{figures/design/DCMotor/TopDesign}
+        \caption{The DC motor controller setup as implemented on the \gls{psoc}. The \texttt{Clock_1} defines the signal to count. A counter is incremented or decremented to control the cycle on each rising edge of the clock. \texttt{tc} is a terminal count which is \texttt{HIGH} when the counter is zero. The \gls{pwm} module has the option to issue interrupts on certain occasions, these are not used, and therefore left unconnected.}
+        \label{fig:DcMotorControllerSetup}
+\end{figure}
+
+The output period of the \gls{pwm} signal from the module in the \gls{psoc} can be changed and it is dependent on the clock source. The \gls{pwm} switching frequency is chosen below.
+
+\subsubsection{Choosing a \gls{pwm} switching frequency}
+%\todo[author=Daniel, inline]{The one who wrote this have to rewrite it or explain it to me, i do not get it}
+A DC motor can be modelled as an inductor, resistor and voltage source in series. The inductor and resistor form a low-pass filter. The time constant of the filter can be determined by analysing \autoref{eq:DC-motorElecEq}, which can be written as \autoref{eq:design:DC-motorElecEq} in the Laplace domain, without initial conditions.
+\begin{equation}
+V_{s}(s)-K_{e}\cdot\Omega_{m}(s) = R_{a}\cdot I_a(s) + I_a(s)\cdot s\cdot L_a \label{eq:design:DC-motorElecEq}
+\end{equation}
+\startexplain
+\explain{$V_s(s)$ is the laplace transformed voltage source}{\si{\noSIunit}}
+\explain{$I_a(s)$ is the laplace transformed current through the motor}{\si{\noSIunit}}
+\explain{$\Omega_m(s)$ is the laplace transformed rotational speed of the rotor shaft}{\si{\noSIunit}}
+\explain{$R_a$ is internal resistance of the motor}{\si{\ohm}}
+\explain{$L_a$ is internal inductance of the motor}{\si{\henry}}
+\explain{$K_e$ is the motor velocity constant}{\si{\volt\second\per\radian}}
+\stopexplain
+
+To determine the transfer function between the voltage across the resistor and the inductor and the current, the equation is rewritten with $V_f(s) = V_{s}(s)-K_{e}\cdot\Omega_{m}(s)$ into \autoref{eq:design:DC-motorElecEq1}.
+\begin{equation}
+V_f(s)= R_{a}\cdot I_a(s)+ I_a(s)\cdot s\cdot L_a  \implies \frac{I_a(s)}{V_f(s)}=\frac{1}{\frac{L_a}{R_a}s + 1} \label{eq:design:DC-motorElecEq1}
+\end{equation}
+\startexplain
+\explain{$V_f(s)$ is the laplace transformed voltage across the resistor and inductor}{\noSIunit}
+\stopexplain
+
+By comparison with the general expression for a linear first order system, the time constant, $\tau$, can be determined, as shown in \autoref{eq:design:DC-motorElecEq2}.
+\begin{equation}
+\frac{1}{\frac{L_a}{R_a}s + 1} = \frac{1}{\tau\cdot s + 1} \implies \tau = \frac{L_a}{R_a} \addunit{\second} \label{eq:design:DC-motorElecEq2}
+\end{equation}
+\startexplain
+\explain{$\tau$ is the time constant}{\si{\second}}
+\stopexplain
+
+The time constant $\tau$ of the resulting RL filter, determines the ripple of the output together with a \gls{pwm} switching frequency. This relationship is now analysed, to determine a sufficient switching frequency $f_{PWM}$ to use in the \gls{psoc} \gls{pwm} module.
+
+When the DC motor is in steady state, at times $t = 0$ and $t = \infty$, the current is only dependent on the voltage and the internal resistor value, as written in \autoref{eq:currentThroughRL}. 
+\begin{equation} \label{eq:currentThroughRL}
+I(\infty) = I(0) = \frac{V_s(0) - K_e \cdot \Omega_m(0)}{R_a}
+\end{equation}
+
+If the current source is cut the inductor resists the change in current. The current now depends on the time constant, as stated by \autoref{eq:currentThroughRLWithTimeconstant}. 
+\begin{equation}\label{eq:currentThroughRLWithTimeconstant}
+	i_a (t) = I(0) \cdot \exp^{-\frac{t}{\tau}}  = I(0) \cdot \exp^{-\frac{t \cdot R_a}{L_a}} \addunit{\ampere}
+\end{equation}
+
+As $t$ approaches infinity the current goes to zero. When the \gls{pwm} duty cycle is 50\% the maximum current ripple occur. Denoting the maximum drop in current of $P$ percent, the time at which the current should be switched on again is determined in \autoref{eq:pwm_freq_derivation} \citep{web:PWMfreq}.
+
+\begin{align} 
+\nonumber	i_a\left(\frac{T}{2}\right) &\geq \left(1 - P\right) \cdot  I(0) \\ \nonumber
+	I(0)\cdot \exp^{-\frac{T \cdot R_a}{2 L_a}} &\geq \left(1 - P\right) \cdot I(0) \\ \nonumber
+	\frac{-T R_a}{2 L_a} &\geq \ln \left(1 - P\right)  \\ 
+	T &\leq -\frac{2 L_a}{R_a} \cdot \ln \left(1 - P\right) \addunit{\second} \label{eq:pwm_freq_derivation}
+\end{align}
+\startexplain
+\explain{$P$ is the maximum drop in current}{\si{\noSIunit}}
+\explain{$T$ is time of a period}{\si{\second}}
+\stopexplain
+
+Since the switching frequency is the inverse of the period time $T$, \autoref{eq:pwm_freq_derivation} can be rewritten as \autoref{eq:switchingFrequency}. 
+\begin{equation} \label{eq:switchingFrequency}
+	f_{PWM} = \frac{1}{T} \geq \frac{-R_a}{2 L_a \cdot \ln \left(1 - P\right)} \addunit{\hertz}
+\end{equation}
+A low ripple means that the speed of the motor is steady. By allowing a maximum current drop of $P = \SI{2}{\percent}$ and the properties for the motor from \autoref{tab:Dc-motorconst} determined in \autoref{test:DC-motorFrequencySweep}, into \autoref{eq:switchingFrequency}, the minimum \gls{pwm} frequency of this system is calculated with \autoref{eq:minPWMFreq}.
+\begin{equation} \label{eq:minPWMFreq}
+	f_{PWM} \geq \frac{-\SI{33,5}{\ohm}}{2 \cdot \SI{1,8}{\milli\henry} \cdot \ln \left(1- \SI{0.02}{}\right)} \approx \SI{460,61}{\kilo\hertz} 
+\end{equation}
+
+\subsection{Programming the \gls{psoc}}\label{sec:design:DCMotorPSoCProgramming}
+The hardware modules are implemented as illustrated on \autoref{fig:DcMotorControllerSetup}, with the chosen switching frequency of $f_{PWM} = \SI{460.61}{\kilo\hertz}$, and controlled by a software implemented controller. Before the controller can be implemented, the transfer function $D_\phi (s)$ must be approximated, such that it can be rewritten into expression that states the current output, dependent on the current input, as well as previous inputs and outputs.
+
+In the collective feedback control system, the controller determines the relationship between the error signal, $e_\phi(t)$ and the control voltage, $v_{c\phi}(t)$, as illustrated in \autoref{design:fig:controlSystemAzimuth2}. Knowing this, \autoref{eq:DCMotorimplementation1} can be established. Furthermore, \autoref{eq:DCMotorimplementation5} can be deduced from  \autoref{eq:DCMotorimplementation1} by inverse laplace transformation.
+\begin{subequations}
+\begin{align} 
+\frac{V_{c \phi} (s)}{E_{\phi} (s)} &= D_\phi (s) = K_p + K_d \cdot s \label{eq:DCMotorimplementation1} \\
+V_{c \phi} (s) &= E_{\phi} (s) \cdot K_p + E_{\phi} (s) \cdot K_d \cdot s \notag \\
+\mathcal{L}^{-1}\left(V_{c \phi} (s)\right) &= \mathcal{L}^{-1}\left(E_{\phi} (s) \cdot K_p + E_{\phi} (s) \cdot K_d \cdot s \right)\notag\\
+v_{c \phi} (t) &= e_{\phi} (t) \cdot K_p + \frac{d e_{\phi} (t)}{d t} \cdot K_d \label{eq:DCMotorimplementation5}
+\end{align}
+\end{subequations}
+
+\autoref{eq:DCMotorimplementation5} has to be rewritten into a time discrete function function so it can be implemented on the \gls{psoc}. Since it contains a differentiation, it needs to be approximated. The approximation can de done with the backward euler method, as done in \autoref{eq:DCMotorEuler1}. 
+\begin{subequations}
+\begin{align} 
+v_{c \phi} [n] &= e_{\phi} [n] \cdot K_p + \frac{ e_{\phi} [n] - e_{\phi} [n-1]}{T} \cdot K_d \label{eq:DCMotorEuler1} \\
+v_{c \phi} [n] &= \left( K_p + \frac{K_d}{T}\right) e_{\phi} [n]  - \left(\frac{K_d}{T}\right) e_{\phi} [n-1] \label{eq:DCMotorEuler2}
+\end{align}
+\end{subequations}
+\startexplain
+\explain{$n$ is the discrete domain time variable, denoting the time $t = n\cdot T$}{\si{\second}}
+\explain{$T$ is time of a period}{\si{\second}}
+\stopexplain
+The expression in \autoref{eq:DCMotorEuler2} shows that the current output $v_{c\phi} [n]$ is dependent on the current input, $e_\phi [n]$, and the previous input, $e_\phi [n-1]$. The controller, as well as the control of the \gls{pwm} module input and switching of the DC motor direction is written in C and implemented on the \gls{psoc}. The code is given in \autoref{lst:DcMotorController}. The output of the controller is increased to $V_{start} = \SI{1.76}{\volt}$ if the input is in the interval $\SI{1}{\milli\radian} < e_\phi \leq \SI{5.87}{\milli\radian}$, as a measure to reduce the steady-state error to comply with \autoref{req:mech_precision} as stated in \autoref{sec:design:DCMotorControllerDesign}.
+
+The \gls{pwm} module accepts a unsigned 8 bit integer, where the value of $2^{8}-1$ equals a duty cycle of 1, and therefore an output equal to the voltage source $V_s$. The supply voltage is chosen as $V_s = \SI{10}{\volt}$ in \autoref{ch:implementation}, and the gain of the \gls{pwm} module is therefore $G_{PWM} = \frac{10}{2^{8}-1} \si{\volt}$. To counteract this, the controller is multiplied by $\left(G_{PWM}\right)^{-1}$.
+
+\begin{figure}[p]
+	\lstinputlisting[language = C, caption = {The DC motor controller code.}, label = {lst:DcMotorController}]{../PSOC/DCMotorController/DCMotorController.c}
+\end{figure}
+
+Now that the DC motor controller and driver have been designed and implemented, the stepper motor controller and driver design is begun.

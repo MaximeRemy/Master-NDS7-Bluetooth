@@ -1,0 +1,20 @@
+\subsection{Required angular velocity of the motor stand}\label{sec:NeedForSpeed}
+In this section the required angular velocity of the motorised antenna stands rotation is found. This speed is needed in order to do system requirements in \autoref{ch:SystemRequirements}.
+\begin{equation} \label{eq:NFS3} 
+\omega = \frac{2\pi}{t} = \frac{2\pi}{\frac{C}{v}} = \frac{2\pi}{\frac{2\pi \cdot r}{v}} \addunit{\radian \per \second}
+\end{equation}
+\startexplain
+\explain{$\omega$ is the minimum speed}{\si{\radian \per \second}}
+\explain{$t$ is the round time or circulation time}{\si{\meter}}
+\explain{$C$ is the circumference}{\si{\meter}}
+\explain{$v$ is the speed of the drone}{\si{\meter \per \second}}
+\explain{$r$ is the distance to the drone}{\si{\meter}}
+\stopexplain
+
+In section \autoref{sec:RequiredPrecision} it is chosen that the prototype should work at ranges up to \SI{120}{\meter} in order to calculate the required precision. In order to determine the required angular velocity of the motor stand a minimum operation range have to be defined as well. Since the drone is not completely steady in the air, some guard distance between the antenna stand and the drone is desired. The minimum operation range is chosen to \SI{20}{\meter}, this is arbitrarily decided based on the estimated needed safety distance and for an approximation needed by some tracking methods seen later in the chapter.  
+
+
+Inserting the the minimum operation range and the speed of the drone (found in \autoref{sec:droneSpec}) into \autoref{eq:NFS3}, yield the needed angular velocity of the motor stand, as seen in \autoref{eq:NFS4}. 
+\begin{equation} \label{eq:NFS4} 
+\omega = \frac{2\pi}{\frac{2\pi \cdot 20}{24.722}} = \SI{1.2361}{\radian \per \second}
+\end{equation}
